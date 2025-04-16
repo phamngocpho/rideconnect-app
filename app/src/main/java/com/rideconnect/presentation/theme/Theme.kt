@@ -1,4 +1,4 @@
-package com.rideconnect.ui.theme
+package com.rideconnect.presentation.theme
 
 import android.app.Activity
 import android.os.Build

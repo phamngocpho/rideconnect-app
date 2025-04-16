@@ -1,4 +1,4 @@
-package com.rideconnect.ui.theme
+package com.rideconnect.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
