@@ -39,6 +39,7 @@ android {
     }
 }
 
+
 dependencies {
 
     implementation(libs.androidx.core.ktx)
@@ -56,4 +57,35 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+
+    // Material Design Icons
+    implementation("androidx.compose.material:material-icons-core:1.5.4")
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
+
+    // Material Design 3
+    implementation("androidx.compose.material3:material3:1.1.2")
+
+    // Foundation
+    implementation("androidx.compose.foundation:foundation:1.5.4")
+
+    // Constraint Layout
+    implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+
+    // Navigation Compose
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    implementation ("androidx.navigation:navigation-compose:2.7.7")
+
+    // Jetpack Compose UI
+    implementation ("androidx.compose.ui:ui:1.5.4")
+
+    // Jetpack Compose Material (chứa BottomNavigation, BottomNavigationItem)
+    implementation ("androidx.compose.material:material:1.5.4")
+
+    // Material Icons (chứa Icons.Default.Home, Icons.Default.Apps, Icons.Default.List, Icons.Default.Person)
+    implementation ("androidx.compose.material:material-icons-core:1.5.4")
+    implementation ("androidx.compose.material:material-icons-extended:1.5.4")
+// user image
+    implementation("io.coil-kt:coil-compose:2.4.0")
 }
