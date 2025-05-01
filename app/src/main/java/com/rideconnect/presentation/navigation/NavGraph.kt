@@ -1,2 +1,205 @@
 package com.rideconnect.presentation.navigation
 
+import android.net.Uri
+import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.rideconnect.domain.model.location.Location
+import com.rideconnect.presentation.screens.auth.login.LoginScreen
+import com.rideconnect.presentation.screens.customer.booking.VehicleSelectionScreen
+//import com.rideconnect.presentation.screens.auth.register.RegisterScreen
+import com.rideconnect.presentation.screens.customer.dashboard.CustomerDashboardScreen
+import com.rideconnect.presentation.screens.customer.location.ConfirmLocationScreen
+import com.rideconnect.presentation.screens.customer.location.SearchLocationScreen
+
+//import com.rideconnect.presentation.screens.driver.dashboard.DriverDashboardScreen
+
+@Composable
+fun RideConnectNavGraph(
+    navController: NavHostController = rememberNavController(),
+    startDestination: String = Screen.Login.route
+) {
+    NavHost(
+        navController = navController,
+        startDestination = startDestination
+    ) {
+        composable(route = Screen.Login.route) {
+            LoginScreen(
+                onNavigateToRegister = {
+                    navController.navigate(Screen.Register.route)
+                },
+                onNavigateToCustomerDashboard = {
+                    navController.navigate(Screen.CustomerDashboard.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
+                onNavigateToDriverDashboard = {
+                    navController.navigate(Screen.DriverDashboard.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+//        composable(route = Screen.Register.route) {
+//            RegisterScreen(
+//                onNavigateToLogin = {
+//                    navController.navigate(Screen.Login.route) {
+//                        popUpTo(Screen.Register.route) { inclusive = true }
+//                    }
+//                },
+//                onRegisterSuccess = {
+//                    navController.navigate(Screen.CustomerDashboard.route) {
+//                        popUpTo(Screen.Register.route) { inclusive = true }
+//                    }
+//                }
+//            )
+//        }
+
+        composable(route = Screen.CustomerDashboard.route) {
+            CustomerDashboardScreen(
+                onNavigate = { destination ->
+                    if (destination == "login") {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(destination)
+                    }
+                }
+            )
+        }
+
+        composable(Screen.SearchLocation.route) {
+            SearchLocationScreen(
+                onBackClick = { navController.navigateUp() },
+                onLocationSelected = { source, destination ->
+                    if (source != null) {
+                        // Táº¡o URI cho navigation vá»›i cÃ¡c tham sá»‘
+                        val sourceLatitude = source.latitude.toFloat()
+                        val sourceLongitude = source.longitude.toFloat()
+                        val sourceAddress = Uri.encode(source.address)
+                        val sourceName = Uri.encode(source.name)
+
+                        val baseRoute = "${Screen.ConfirmLocation.route}/$sourceLatitude/$sourceLongitude/$sourceAddress/$sourceName"
+
+                        val route = if (destination != null) {
+                            val destLatitude = destination.latitude.toFloat()
+                            val destLongitude = destination.longitude.toFloat()
+                            val destAddress = Uri.encode(destination.address)
+                            val destName = Uri.encode(destination.name)
+                            "$baseRoute?destinationLatitude=$destLatitude&destinationLongitude=$destLongitude&destinationAddress=$destAddress&destinationName=$destName"
+                        } else {
+                            baseRoute
+                        }
+
+                        navController.navigate(route)
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = "${Screen.ConfirmLocation.route}/{sourceLatitude}/{sourceLongitude}/{sourceAddress}/{sourceName}?destinationLatitude={destinationLatitude}&destinationLongitude={destinationLongitude}&destinationAddress={destinationAddress}&destinationName={destinationName}",
+            arguments = listOf(
+                navArgument("sourceLatitude") { type = NavType.FloatType },
+                navArgument("sourceLongitude") { type = NavType.FloatType },
+                navArgument("sourceAddress") { type = NavType.StringType },
+                navArgument("sourceName") { type = NavType.StringType },
+                navArgument("destinationLatitude") { type = NavType.FloatType; defaultValue = 0f },
+                navArgument("destinationLongitude") { type = NavType.FloatType; defaultValue = 0f },
+                navArgument("destinationAddress") { type = NavType.StringType; nullable = true },
+                navArgument("destinationName") { type = NavType.StringType; nullable = true }
+            )
+        ) { backStackEntry ->
+            val sourceLatitude = backStackEntry.arguments?.getFloat("sourceLatitude") ?: 0f
+            val sourceLongitude = backStackEntry.arguments?.getFloat("sourceLongitude") ?: 0f
+            val sourceAddress = backStackEntry.arguments?.getString("sourceAddress") ?: ""
+            val sourceName = backStackEntry.arguments?.getString("sourceName") ?: ""
+
+            val destinationLatitude = backStackEntry.arguments?.getFloat("destinationLatitude")
+            val destinationLongitude = backStackEntry.arguments?.getFloat("destinationLongitude")
+            val destinationAddress = backStackEntry.arguments?.getString("destinationAddress")
+            val destinationName = backStackEntry.arguments?.getString("destinationName")
+
+            val sourceLocation = Location(
+                latitude = sourceLatitude.toDouble(),
+                longitude = sourceLongitude.toDouble(),
+                address = sourceAddress,
+                name = sourceName
+            )
+
+            val destinationLocation = if (destinationLatitude != 0f && destinationLongitude != 0f) {
+                Location(
+                    latitude = destinationLatitude!!.toDouble(),
+                    longitude = destinationLongitude!!.toDouble(),
+                    address = destinationAddress ?: "",
+                    name = destinationName ?: ""
+                )
+            } else null
+
+            ConfirmLocationScreen(
+                sourceLocation = sourceLocation,
+                destinationLocation = destinationLocation,
+                onBackClick = { navController.navigateUp() },
+                onConfirmLocation = { source, destination ->
+                    navController.navigate(Screen.VehicleSelection.createRoute(source, destination))
+                }
+            )
+        }
+
+
+        composable(
+            route = Screen.VehicleSelection.route,
+            arguments = listOf(
+                navArgument("sourceLocationJson") {
+                    type = NavType.StringType
+                },
+                navArgument("destinationLocationJson") {
+                    type = NavType.StringType
+                    nullable = true
+                }
+            )
+        ) { backStackEntry ->
+            val sourceLocationJson = backStackEntry.arguments?.getString("sourceLocationJson")?.let { Uri.decode(it) }
+            val destinationLocationJson = backStackEntry.arguments?.getString("destinationLocationJson")?.let { Uri.decode(it) }
+
+            val sourceLocation = sourceLocationJson?.let { Location.fromJson(it) }
+            val destinationLocation = if (destinationLocationJson != "null") {
+                destinationLocationJson?.let { Location.fromJson(it) }
+            } else {
+                null
+            }
+
+            if (sourceLocation != null) {
+                VehicleSelectionScreen(
+                    sourceLocation = sourceLocation,
+                    destinationLocation = destinationLocation,
+                    onBackClick = { navController.popBackStack() },
+                    onBookRide = { vehicleType ->
+                        // Điều hướng đến màn hình tiếp theo sau khi đặt xe
+                        navController.navigate("ride_tracking_screen/${vehicleType.name}") {
+                            // Xóa các màn hình không cần thiết khỏi back stack
+                            popUpTo(Screen.CustomerDashboard.route)
+                        }
+                    }
+                )
+            }
+        }
+
+
+//        composable(route = Screen.DriverDashboard.route) {
+//            DriverDashboardScreen(
+//                onLogout = {
+//                    navController.navigate(Screen.Login.route) {
+//                        popUpTo(navController.graph.id) { inclusive = true }
+//                    }
+//                }
+//            )
+//        }
+    }
+}
