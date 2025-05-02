@@ -162,4 +162,9 @@ dependencies {
     implementation (libs.maps.compose)
     implementation (libs.mapbox.sdk.services)
     implementation(libs.mapbox.android.sdk)
+    modules {
+        module("com.mapbox.mapboxsdk:mapbox-android-core") {
+            replacedBy("com.mapbox.common:common", "Mapbox SDK đã được cập nhật")
+        }
+    }
 }
