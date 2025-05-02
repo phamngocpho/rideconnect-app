@@ -161,4 +161,5 @@ dependencies {
 
     implementation (libs.maps.compose)
     implementation (libs.mapbox.sdk.services)
+    implementation(libs.mapbox.android.sdk)
 }
