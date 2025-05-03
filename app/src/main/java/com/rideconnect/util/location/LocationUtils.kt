@@ -11,6 +11,7 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.rideconnect.domain.model.location.Location
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.*
 import javax.inject.Inject
@@ -42,6 +43,9 @@ class LocationUtils @Inject constructor(
      * @throws SecurityException nếu không có quyền truy cập vị trí
      * @throws Exception nếu không thể lấy vị trí vì lý do khác
      */
+    /**
+     * Lấy vị trí hiện tại của người dùng
+     */
     suspend fun getCurrentLocation(): Location = suspendCancellableCoroutine { continuation ->
         try {
             // Kiểm tra quyền truy cập vị trí trước khi gọi API
@@ -52,43 +56,25 @@ class LocationUtils @Inject constructor(
 
             val cancellationToken = CancellationTokenSource()
 
-            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken.token)
-                .addOnSuccessListener { location ->
-                    if (location != null) {
-                        // Reverse geocode to get address
-                        try {
-                            val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-                            val address = if (addresses?.isNotEmpty() == true) {
-                                addresses[0].getAddressLine(0)
-                            } else {
-                                "Vị trí hiện tại"
-                            }
-
-                            continuation.resume(
-                                Location(
-                                    latitude = location.latitude,
-                                    longitude = location.longitude,
-                                    address = address,
-                                    name = "Vị trí hiện tại"
-                                )
-                            )
-                        } catch (e: Exception) {
-                            continuation.resume(
-                                Location(
-                                    latitude = location.latitude,
-                                    longitude = location.longitude,
-                                    address = "Vị trí hiện tại",
-                                    name = "Vị trí hiện tại"
-                                )
-                            )
+            // Thêm try-catch block để xử lý SecurityException trực tiếp
+            try {
+                fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, cancellationToken.token)
+                    .addOnSuccessListener { location ->
+                        if (location != null) {
+                            // Xử lý khi có vị trí
+                            handleLocationResult(location, continuation)
+                        } else {
+                            // Xử lý khi không lấy được vị trí (có thể vị trí đã bị tắt)
+                            continuation.resumeWithException(Exception("Không thể lấy vị trí hiện tại. Hãy kiểm tra dịch vụ vị trí đã được bật chưa."))
                         }
-                    } else {
-                        continuation.resumeWithException(Exception("Không thể lấy vị trí hiện tại"))
                     }
-                }
-                .addOnFailureListener { e ->
-                    continuation.resumeWithException(e)
-                }
+                    .addOnFailureListener { e ->
+                        continuation.resumeWithException(e)
+                    }
+            } catch (se: SecurityException) {
+                // Xử lý trường hợp SecurityException
+                continuation.resumeWithException(se)
+            }
 
             continuation.invokeOnCancellation {
                 cancellationToken.cancel()
@@ -97,6 +83,46 @@ class LocationUtils @Inject constructor(
             continuation.resumeWithException(e)
         }
     }
+
+    private fun handleLocationResult(location: android.location.Location, continuation: CancellableContinuation<Location>) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            geocoder.getFromLocation(location.latitude, location.longitude, 1) { addresses ->
+                val address = if (addresses.isNotEmpty()) {
+                    addresses[0].getAddressLine(0)
+                } else {
+                    "Vị trí hiện tại"
+                }
+
+                continuation.resume(
+                    Location(
+                        latitude = location.latitude,
+                        longitude = location.longitude,
+                        address = address,
+                        name = "Vị trí hiện tại"
+                    )
+                )
+            }
+        } else {
+            // Phiên bản cũ cho Android 12 trở xuống
+            @Suppress("DEPRECATION")
+            val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+            val address = if (addresses?.isNotEmpty() == true) {
+                addresses[0].getAddressLine(0)
+            } else {
+                "Vị trí hiện tại"
+            }
+
+            continuation.resume(
+                Location(
+                    latitude = location.latitude,
+                    longitude = location.longitude,
+                    address = address,
+                    name = "Vị trí hiện tại"
+                )
+            )
+        }
+    }
+
 
     /**
      * Lấy vị trí mặc định nếu không thể lấy vị trí thực

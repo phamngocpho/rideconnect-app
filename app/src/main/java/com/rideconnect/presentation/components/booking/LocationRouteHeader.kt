@@ -17,8 +17,10 @@ import com.rideconnect.domain.model.location.Location
 fun LocationRouteHeader(
     sourceLocation: Location,
     destinationLocation: Location?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    visible: Boolean = true
 ) {
+    if (!visible) return
     Card(
         modifier = modifier,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)

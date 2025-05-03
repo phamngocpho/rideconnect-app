@@ -177,12 +177,12 @@ fun RideConnectNavGraph(
 
             if (sourceLocation != null) {
                 VehicleSelectionScreen(
-                    sourceLocation = sourceLocation,
-                    destinationLocation = destinationLocation,
+                    pickupLocation = sourceLocation,                 // Đổi từ sourceLocation thành pickupLocation
+                    destinationLocation = destinationLocation ?: sourceLocation,  // Đảm bảo destinationLocation không null
                     onBackClick = { navController.popBackStack() },
-                    onBookRide = { vehicleType ->
+                    onBookingConfirmed = {                           // Đổi từ onBookRide thành onBookingConfirmed
                         // Điều hướng đến màn hình tiếp theo sau khi đặt xe
-                        navController.navigate("ride_tracking_screen/${vehicleType.name}") {
+                        navController.navigate("ride_tracking_screen") {
                             // Xóa các màn hình không cần thiết khỏi back stack
                             popUpTo(Screen.CustomerDashboard.route)
                         }

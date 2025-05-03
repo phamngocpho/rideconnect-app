@@ -2,8 +2,8 @@ package com.rideconnect.presentation.components.booking
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,7 +28,7 @@ fun RidePreferenceCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = Icons.Default.VolumeOff,
+                imageVector = Icons.AutoMirrored.Filled.VolumeOff,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )

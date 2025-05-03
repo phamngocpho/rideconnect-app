@@ -30,21 +30,22 @@ fun VehicleList(
                 modifier = Modifier.align(Alignment.Center)
             )
         } else {
+            val effectiveSelectedId = selectedVehicleId ?: vehicles.firstOrNull()?.id
+
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(vertical = 8.dp)
+                verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
                 items(vehicles) { vehicle ->
                     VehicleItem(
                         vehicle = vehicle,
-                        isSelected = vehicle.id == selectedVehicleId,
+                        isSelected = vehicle.id == effectiveSelectedId,
                         onClick = { onVehicleSelected(vehicle) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
         }
     }
 }
+

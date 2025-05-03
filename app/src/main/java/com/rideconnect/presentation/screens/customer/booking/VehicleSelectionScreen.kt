@@ -1,116 +1,219 @@
 package com.rideconnect.presentation.screens.customer.booking
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mapbox.maps.extension.compose.animation.viewport.MapViewportState
 import com.rideconnect.domain.model.location.Location
-import com.rideconnect.domain.model.vehicle.VehicleType
-import com.rideconnect.presentation.components.booking.BookTripButton
-import com.rideconnect.presentation.components.booking.LocationRouteHeader
-import com.rideconnect.presentation.components.booking.PaymentMethodSelector
-import com.rideconnect.presentation.components.booking.RidePreferenceCard
-import com.rideconnect.presentation.components.booking.VehicleList
-import com.rideconnect.presentation.components.booking.VehicleTypeFilter
+import com.rideconnect.presentation.components.booking.*
 import com.rideconnect.presentation.components.common.LoadingStateContent
-import com.rideconnect.presentation.components.navigation.VehicleSelectionTopBar
+import com.rideconnect.presentation.components.maps.RouteMapComponent
 
 @Composable
 fun VehicleSelectionScreen(
-    viewModel: VehicleSelectionViewModel = hiltViewModel(),
-    sourceLocation: Location,
-    destinationLocation: Location?,
+    pickupLocation: Location,
+    destinationLocation: Location,
     onBackClick: () -> Unit,
-    onBookRide: (vehicleType: VehicleType) -> Unit
+    onBookingConfirmed: () -> Unit,
+    viewModel: VehicleSelectionViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val routePoints by viewModel.routePoints.collectAsState()
+    val isLoadingRoute by viewModel.isLoadingRoute.collectAsState()
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(sourceLocation, destinationLocation) {
-        viewModel.loadAvailableVehicles(sourceLocation, destinationLocation)
+    LaunchedEffect(pickupLocation, destinationLocation) {
+        viewModel.setPickupAndDestination(pickupLocation, destinationLocation)
     }
 
-    Scaffold(
-        topBar = {
-            VehicleSelectionTopBar(onBackClick = onBackClick)
+    uiState.error?.let { error ->
+        LaunchedEffect(error) {
+            viewModel.clearError()
         }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Hiển thị thông tin tuyến đường
-            LocationRouteHeader(
-                sourceLocation = sourceLocation,
-                destinationLocation = destinationLocation,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            )
+    }
 
-            // Bộ lọc loại phương tiện
-            VehicleTypeFilter(
-                selectedType = state.selectedVehicleType,
-                onTypeSelected = { viewModel.selectVehicleType(it) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            )
+    val mapViewportState = remember {
+        MapViewportState().apply {
+            setCameraOptions {
+                center(
+                    com.mapbox.geojson.Point.fromLngLat(
+                        pickupLocation.longitude,
+                        pickupLocation.latitude
+                    )
+                )
+                zoom(14.0)
+            }
+        }
+    }
 
-            // Phần nội dung chính với xử lý loading/error
-            LoadingStateContent(
-                isLoading = state.isLoading,
-                error = state.error,
-                onRetry = { viewModel.retry() },
-                modifier = Modifier.weight(1f),
-                content = {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Map container
+            Box(
+                modifier = Modifier
+                    .weight(0.4f)
+                    .fillMaxWidth()
+            ) {
+                LoadingStateContent(
+                    isLoading = isLoadingRoute,
+                    error = null,
+                    onRetry = { },
+                    content = {
+                        RouteMapComponent(
+                            mapViewportState = mapViewportState,
+                            routePoints = routePoints
+                        )
+                    }
+                )
+            }
+
+            // Vehicle selection panel
+            Surface(
+                modifier = Modifier
+                    .weight(0.6f)
+                    .fillMaxWidth(),
+                tonalElevation = 8.dp,
+                shadowElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    // Route info header
+                    LocationRouteHeader(
+                        sourceLocation = pickupLocation,
+                        destinationLocation = destinationLocation,
+                        visible = false,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    // Vehicle type filter
+                    VehicleTypeFilter(
+                        selectedType = uiState.selectedVehicleType,
+                        onTypeSelected = { vehicleType ->
+                            viewModel.filterByVehicleType(vehicleType)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    )
+
+                    // Vehicle list
                     VehicleList(
-                        vehicles = state.availableVehicles,
-                        onVehicleSelected = { viewModel.selectVehicle(it) },
-                        selectedVehicleId = state.selectedVehicle?.id,
-                        isLoading = false,
+                        vehicles = uiState.availableVehicles,
+                        isLoading = uiState.isLoading,
+                        onVehicleSelected = { vehicle ->
+                            viewModel.selectVehicle(vehicle)
+                        },
+                        selectedVehicleId = uiState.selectedVehicle?.id,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
                     )
-                }
-            )
 
-            // Phần thanh toán
-            val paymentState = state.paymentState
-            if (paymentState.availablePaymentMethods.isNotEmpty() && paymentState.selectedPaymentMethod != null) {
-                PaymentMethodSelector(
-                    availablePaymentMethods = paymentState.availablePaymentMethods,
-                    selectedMethod = paymentState.selectedPaymentMethod,
-                    onPaymentMethodSelected = { method ->
-                        viewModel.selectPaymentMethod(method)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                )
-            }
+                    // Bottom options row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        RidePreferenceCard(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            onClick = { /* Show additional options */ }
+                        )
 
-            // Gợi ý tùy chọn chuyến đi
-            RidePreferenceCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-
-            // Nút đặt xe
-            BookTripButton(
-                selectedVehicle = state.selectedVehicle,
-                onBookRide = {
-                    state.selectedVehicle?.let {
-                        onBookRide(it.type)
+                        uiState.selectedPaymentMethod?.let { selectedMethod ->
+                            PaymentMethodSelector(
+                                availablePaymentMethods = uiState.paymentMethods,
+                                selectedMethod = selectedMethod,
+                                onPaymentMethodSelected = { paymentMethod ->
+                                    viewModel.selectPaymentMethod(paymentMethod.id)
+                                },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp)
+                            )
+                        }
                     }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+
+                    // Book trip button
+                    BookTripButton(
+                        selectedVehicle = uiState.selectedVehicle,
+                        onBookRide = onBookingConfirmed,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp)
+                            .height(56.dp)
+                    )
+                }
+            }
+        }
+
+        // Back button overlay
+        IconButton(
+            onClick = onBackClick,
+            modifier = Modifier
+                .padding(16.dp)
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
+                .align(Alignment.TopStart)
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Quay lại",
+                tint = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+@Composable
+fun RidePreferenceCard(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.VolumeOff,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Bạn cần được yên tĩnh?",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }

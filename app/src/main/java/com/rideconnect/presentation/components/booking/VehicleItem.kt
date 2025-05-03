@@ -20,78 +20,61 @@ fun VehicleItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val borderColor = if (isSelected)
-        MaterialTheme.colorScheme.primary
-    else
-        MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-
-    val backgroundColor = if (isSelected)
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
-    else
-        Color.Transparent
-
     Card(
-        modifier = modifier.clickable { onClick() },
-        border = BorderStroke(1.dp, borderColor),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 4.dp),
+        colors = CardDefaults.cardColors(
+            // Tăng alpha lên 0.15f để đậm hơn (từ 0.1f)
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+            else MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Icon phương tiện
+            // Icon xe
             VehicleIcon(
                 vehicleType = vehicle.type,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(32.dp)
             )
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
-            // Thông tin phương tiện
+            // Thông tin chính
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = vehicle.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Text(
-                        text = vehicle.formattedPrice,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Đón trong ${vehicle.estimatedPickupTime} phút",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Text(
+                    text = vehicle.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Normal
+                )
 
                 Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
-                    text = vehicle.description,
+                    text = "Đón trong ${vehicle.estimatedPickupTime} phút",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            // Giá
+            Text(
+                text = "${vehicle.price}₫",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
+

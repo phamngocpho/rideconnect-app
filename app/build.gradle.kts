@@ -35,6 +35,10 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
+        }
     }
 
     buildTypes {
@@ -160,11 +164,19 @@ dependencies {
     implementation (libs.android)
 
     implementation (libs.maps.compose)
-    implementation (libs.mapbox.sdk.services)
-    implementation(libs.mapbox.android.sdk)
-    modules {
-        module("com.mapbox.mapboxsdk:mapbox-android-core") {
-            replacedBy("com.mapbox.common:common", "Mapbox SDK đã được cập nhật")
-        }
-    }
+
+    implementation ("com.mapbox.base:common:0.11.0")
+    implementation ("com.mapbox.mapboxsdk:mapbox-android-gestures:0.8.0")
+
+    // Thư viện hỗ trợ GeoJSON và Turf
+    implementation ("com.mapbox.mapboxsdk:mapbox-sdk-geojson:5.4.1")
+    implementation ("com.mapbox.mapboxsdk:mapbox-sdk-turf:5.4.1")
+
+    implementation ("com.mapbox.plugin:maps-lifecycle:11.11.0")
+    implementation ("com.mapbox.plugin:maps-compass:11.11.0")
+    implementation ("com.mapbox.plugin:maps-logo:11.11.0")
+    implementation ("com.mapbox.plugin:maps-scalebar:11.11.0")
+    implementation ("com.mapbox.plugin:maps-gestures:11.11.0")
+    implementation ("com.mapbox.plugin:maps-attribution:11.11.0")
+
 }
