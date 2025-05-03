@@ -71,8 +71,10 @@ fun VehicleSelectionScreen(
                     onRetry = { },
                     content = {
                         RouteMapComponent(
-                            mapViewportState = mapViewportState,
-                            routePoints = routePoints
+                            modifier = Modifier.fillMaxSize(),
+                            routePoints = routePoints,
+                            routeColor = "#4A90E2",
+                            routeWidth = 8.0
                         )
                     }
                 )

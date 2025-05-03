@@ -1,126 +1,129 @@
 package com.rideconnect.presentation.components.maps
 
-import android.util.Log
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.mapbox.geojson.Point
-import com.mapbox.maps.CameraOptions
-import com.mapbox.maps.CoordinateBounds
 import com.mapbox.maps.EdgeInsets
-import com.mapbox.maps.extension.compose.MapboxMap
-import com.mapbox.maps.extension.compose.animation.viewport.MapViewportState
-import com.mapbox.maps.extension.compose.style.standard.MapboxStandardStyle
-import com.mapbox.maps.extension.style.layers.generated.lineLayer
-import com.mapbox.maps.extension.style.layers.properties.generated.LineCap
-import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
-import com.mapbox.maps.extension.style.sources.generated.geoJsonSource
+import com.mapbox.maps.MapView
+import com.mapbox.maps.Style
 import com.mapbox.maps.plugin.animation.MapAnimationOptions
-import com.rideconnect.util.map.MapRouteUtils
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import com.mapbox.maps.plugin.animation.flyTo
+import com.mapbox.maps.plugin.annotation.annotations
+import com.mapbox.maps.plugin.annotation.generated.PolylineAnnotationManager
+import com.mapbox.maps.plugin.annotation.generated.PolylineAnnotationOptions
+import com.mapbox.maps.plugin.annotation.generated.createPolylineAnnotationManager
 
 @Composable
 fun RouteMapComponent(
     modifier: Modifier = Modifier,
-    mapViewportState: MapViewportState,
-    routePoints: List<Point> = emptyList(),
-    showSourceMarker: Boolean = false,
-    routeColor: Color = Color(0xFF4285F4),
+    routePoints: List<Point>,
+    routeColor: String = "#4A90E2",
     routeWidth: Double = 8.0
 ) {
-    val TAG = "RouteMapComponent"
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    // State để kiểm soát việc hiển thị route
-    var shouldShowRoute by remember { mutableStateOf(false) }
+    var polylineAnnotationManager: PolylineAnnotationManager? by remember { mutableStateOf(null) }
 
-    val routeFeatureCollection = remember(routePoints) {
-        MapRouteUtils.createRouteFeatureCollection(routePoints)
+    val mapView = remember {
+        MapView(context).apply {
+            mapboxMap.loadStyle(Style.MAPBOX_STREETS)
+        }
     }
 
-    // Thêm delay trước khi hiển thị route
+    // Update route khi có thay đổi
     LaunchedEffect(routePoints) {
-        shouldShowRoute = false
         if (routePoints.isNotEmpty()) {
-            delay(500) // Thêm delay để đảm bảo map đã load
-            shouldShowRoute = true
-        }
-    }
+            // Xóa annotations cũ
+            polylineAnnotationManager?.deleteAll()
 
-    val bounds = remember(routePoints) {
-        if (routePoints.isNotEmpty()) {
-            var minLat = routePoints.minOf { it.latitude() }
-            var maxLat = routePoints.maxOf { it.latitude() }
-            var minLng = routePoints.minOf { it.longitude() }
-            var maxLng = routePoints.maxOf { it.longitude() }
-
-            val latPadding = (maxLat - minLat) * 0.2
-            val lngPadding = (maxLng - minLng) * 0.2
-
-            CoordinateBounds(
-                Point.fromLngLat(minLng - lngPadding, minLat - latPadding),
-                Point.fromLngLat(maxLng + lngPadding, maxLat + latPadding)
-            )
-        } else null
-    }
-
-    Box(modifier = modifier) {
-        MapboxMap(
-            modifier = Modifier.fillMaxSize(),
-            mapViewportState = mapViewportState,
-            style = {
-                MapboxStandardStyle()
-                Log.d(TAG, "Đã áp dụng MapboxStandardStyle")
-
-                // Thêm source trước
-                geoJsonSource(id = "route-source") {
-                    featureCollection(routeFeatureCollection)
-                    lineMetrics(true)
-                    Log.d(TAG, "Updated source with ${routePoints.size} points")
-                }
-                Log.d(TAG, "Đã tạo GeoJsonSource 'route-source'")
-
-                // Sau đó thêm layer
-                lineLayer(
-                    layerId = "route-layer",
-                    sourceId = "route-source"
-                ) {
-                    lineColor(routeColor.hashCode())
-                    lineWidth(routeWidth)
-                    lineCap(LineCap.ROUND)
-                    lineJoin(LineJoin.ROUND)
-                    lineOpacity(1.0)
-                    lineBlur(1.0)
-                    lineDasharray(listOf(1.0, 2.0))
-                }
-                Log.d(TAG, "Line style: color=${routeColor.hashCode()}, width=$routeWidth")
-                Log.d(TAG, "Đã tạo LineLayer 'route-layer'")
+            // Tạo polyline annotation manager nếu chưa có
+            if (polylineAnnotationManager == null) {
+                polylineAnnotationManager = mapView.annotations.createPolylineAnnotationManager()
             }
-        )
-    }
 
-    // Di chuyển camera sau khi map đã load
-    LaunchedEffect(bounds) {
-        bounds?.let { boundingBox ->
-            delay(1000) // Đảm bảo map đã load
-            val cameraOptions = mapViewportState.cameraForCoordinates(
-                coordinates = listOf(boundingBox.southwest, boundingBox.northeast),
-                coordinatesPadding = EdgeInsets(50.0, 50.0, 50.0, 50.0)
+            // Tạo route với shadow
+            val shadowRouteOptions = PolylineAnnotationOptions()
+                .withPoints(routePoints)
+                .withLineColor("#000000")
+                .withLineWidth(routeWidth + 3.0)
+                .withLineOpacity(0.2)
+                .withLineSortKey(1.0)
+
+            // Tạo main route
+            val mainRouteOptions = PolylineAnnotationOptions()
+                .withPoints(routePoints)
+                .withLineColor(routeColor)
+                .withLineWidth(routeWidth)
+                .withLineSortKey(2.0)
+
+            // Add routes
+            polylineAnnotationManager?.create(shadowRouteOptions)
+            polylineAnnotationManager?.create(mainRouteOptions)
+
+            // Tính toán bounds với padding
+            val minLat = routePoints.minOf { it.latitude() }
+            val maxLat = routePoints.maxOf { it.latitude() }
+            val minLng = routePoints.minOf { it.longitude() }
+            val maxLng = routePoints.maxOf { it.longitude() }
+
+            // Thêm padding 30%
+            val latPadding = (maxLat - minLat) * 0.4
+            val lngPadding = (maxLng - minLng) * 0.4
+
+            val northeast = Point.fromLngLat(
+                maxLng + lngPadding,
+                maxLat + latPadding
+            )
+            val southwest = Point.fromLngLat(
+                minLng - lngPadding,
+                minLat - latPadding
             )
 
-            mapViewportState.flyTo(
-                cameraOptions = cameraOptions,
-                animationOptions = MapAnimationOptions.mapAnimationOptions {
-                    duration(1000)
-                }
+            // Camera animation với padding và zoom control
+            val cameraPosition = mapView.mapboxMap.cameraForCoordinates(
+                coordinates = listOf(southwest, northeast),
+                EdgeInsets(
+                    120.0,
+                    120.0,
+                    120.0,
+                    120.0
+                ),
+                bearing = 0.0,
+                pitch = 0.0
+            )
+
+            // Điều chỉnh zoom level
+            val adjustedCamera = cameraPosition.toBuilder().apply {
+                // Giới hạn zoom trong khoảng 11-16
+                zoom(
+                    (cameraPosition.zoom ?: 0.0).coerceIn(10.0, 15.0)
+                )
+            }.build()
+
+            // Áp dụng animation
+            mapView.mapboxMap.flyTo(
+                adjustedCamera,
+                MapAnimationOptions.Builder()
+                    .duration(1000L)
+                    .build()
             )
         }
     }
+
+    // Cleanup
+    DisposableEffect(lifecycleOwner) {
+        onDispose {
+            polylineAnnotationManager?.deleteAll()
+            mapView.onDestroy()
+        }
+    }
+
+    AndroidView(
+        factory = { mapView },
+        modifier = modifier
+    )
 }
