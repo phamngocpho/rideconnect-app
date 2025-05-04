@@ -18,4 +18,11 @@ sealed class Screen(val route: String) {
             return "vehicle_selection_screen/$sourceJson/$destJson"
         }
     }
+
+    data object SearchingDriver : Screen("searching_driver/{sourceLatitude}/{sourceLongitude}/{destLatitude}/{destLongitude}")
+    {
+        fun createRoute(pickup: Location, destination: Location): String {
+            return "searching_driver/${pickup.latitude}/${pickup.longitude}/${destination.latitude}/${destination.longitude}"
+        }
+    }
 }

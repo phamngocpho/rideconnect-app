@@ -14,6 +14,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mapbox.geojson.Point
+import com.mapbox.maps.MapView
 import com.mapbox.maps.extension.compose.animation.viewport.MapViewportState
 import com.rideconnect.domain.model.location.Location
 import com.rideconnect.presentation.components.booking.*
@@ -31,6 +33,11 @@ fun VehicleSelectionScreen(
     val uiState by viewModel.uiState.collectAsState()
     val routePoints by viewModel.routePoints.collectAsState()
     val isLoadingRoute by viewModel.isLoadingRoute.collectAsState()
+    var mapView by remember { mutableStateOf<MapView?>(null) }
+
+    val pickupPoint = remember(pickupLocation) {
+        Point.fromLngLat(pickupLocation.longitude, pickupLocation.latitude)
+    }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(pickupLocation, destinationLocation) {
@@ -74,7 +81,9 @@ fun VehicleSelectionScreen(
                             modifier = Modifier.fillMaxSize(),
                             routePoints = routePoints,
                             routeColor = "#4A90E2",
-                            routeWidth = 8.0
+                            routeWidth = 8.0,
+                            pickupLocation = pickupPoint,
+                            onMapViewCreated = { mapView = it }
                         )
                     }
                 )

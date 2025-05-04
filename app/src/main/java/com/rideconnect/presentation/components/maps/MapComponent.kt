@@ -17,9 +17,10 @@ import com.mapbox.maps.extension.compose.style.standard.MapboxStandardStyle
 
 @Composable
 fun MapComponent(
+    modifier: Modifier = Modifier,
     mapViewportState: MapViewportState,
-    showSourceMarker: Boolean = false,
-    modifier: Modifier = Modifier
+    showSourceMarker: Boolean = false
+
 ) {
     Box(modifier = modifier) {
         // MapboxMap với các tham số phù hợp với API hiện tại

@@ -19,7 +19,9 @@ fun RouteMapComponent(
     modifier: Modifier = Modifier,
     routePoints: List<Point>,
     routeColor: String = "#4A90E2",
-    routeWidth: Double = 8.0
+    routeWidth: Double = 8.0,
+    pickupLocation: Point, // Thêm pickup location
+    onMapViewCreated: (MapView) -> Unit = {} // Callback để trả về MapView instance
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -30,6 +32,8 @@ fun RouteMapComponent(
         MapView(context).apply {
             mapboxMap.loadStyle(Style.MAPBOX_STREETS) { _ ->
                 isMapStyleLoaded = true
+                // Thông báo MapView đã sẵn sàng
+                onMapViewCreated(this)
             }
         }
     }
@@ -45,11 +49,12 @@ fun RouteMapComponent(
                 polylineAnnotationManager = mapView.annotations.createPolylineAnnotationManager()
             }
 
-            // Tính toán camera bounds
-            val minLat = routePoints.minOf { it.latitude() }
-            val maxLat = routePoints.maxOf { it.latitude() }
-            val minLng = routePoints.minOf { it.longitude() }
-            val maxLng = routePoints.maxOf { it.longitude() }
+            // Tính toán camera bounds bao gồm cả pickup location
+            val points = routePoints + pickupLocation
+            val minLat = points.minOf { it.latitude() }
+            val maxLat = points.maxOf { it.latitude() }
+            val minLng = points.minOf { it.longitude() }
+            val maxLng = points.maxOf { it.longitude() }
 
             val latPadding = (maxLat - minLat) * 0.1
             val lngPadding = (maxLng - minLng) * 0.1
@@ -63,7 +68,7 @@ fun RouteMapComponent(
                 minLat - latPadding
             )
 
-            // Set camera position ngay lập tức
+            // Set camera position
             val cameraOptions = mapView.mapboxMap.cameraForCoordinates(
                 coordinates = listOf(southwest, northeast),
                 EdgeInsets(50.0, 50.0, 50.0, 50.0)
@@ -103,4 +108,3 @@ fun RouteMapComponent(
         modifier = modifier
     )
 }
-

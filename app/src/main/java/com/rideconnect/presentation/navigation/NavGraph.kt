@@ -10,6 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.rideconnect.domain.model.location.Location
 import com.rideconnect.presentation.screens.auth.login.LoginScreen
+import com.rideconnect.presentation.screens.customer.booking.SearchingDriverScreen
 import com.rideconnect.presentation.screens.customer.booking.VehicleSelectionScreen
 //import com.rideconnect.presentation.screens.auth.register.RegisterScreen
 import com.rideconnect.presentation.screens.customer.dashboard.CustomerDashboardScreen
@@ -177,18 +178,46 @@ fun RideConnectNavGraph(
 
             if (sourceLocation != null) {
                 VehicleSelectionScreen(
-                    pickupLocation = sourceLocation,                 // Đổi từ sourceLocation thành pickupLocation
-                    destinationLocation = destinationLocation ?: sourceLocation,  // Đảm bảo destinationLocation không null
+                    pickupLocation = sourceLocation,
+                    destinationLocation = destinationLocation ?: sourceLocation,
                     onBackClick = { navController.popBackStack() },
-                    onBookingConfirmed = {                           // Đổi từ onBookRide thành onBookingConfirmed
-                        // Điều hướng đến màn hình tiếp theo sau khi đặt xe
-                        navController.navigate("ride_tracking_screen") {
-                            // Xóa các màn hình không cần thiết khỏi back stack
-                            popUpTo(Screen.CustomerDashboard.route)
-                        }
+                    onBookingConfirmed = {
+                        navController.navigate(
+                            Screen.SearchingDriver.createRoute(
+                                pickup = sourceLocation,
+                                destination = destinationLocation ?: sourceLocation
+                            )
+                        )
                     }
                 )
             }
+        }
+
+        composable(
+            route = Screen.SearchingDriver.route,
+            arguments = listOf(
+                navArgument("sourceLatitude") { type = NavType.FloatType },
+                navArgument("sourceLongitude") { type = NavType.FloatType },
+                navArgument("destLatitude") { type = NavType.FloatType },
+                navArgument("destLongitude") { type = NavType.FloatType }
+            )
+        ) { backStackEntry ->
+            val sourceLatitude = backStackEntry.arguments?.getFloat("sourceLatitude") ?: 0f
+            val sourceLongitude = backStackEntry.arguments?.getFloat("sourceLongitude") ?: 0f
+            val destLatitude = backStackEntry.arguments?.getFloat("destLatitude") ?: 0f
+            val destLongitude = backStackEntry.arguments?.getFloat("destLongitude") ?: 0f
+
+            SearchingDriverScreen(
+                pickupLocation = Location(
+                    latitude = sourceLatitude.toDouble(),
+                    longitude = sourceLongitude.toDouble()
+                ),
+                destinationLocation = Location(
+                    latitude = destLatitude.toDouble(),
+                    longitude = destLongitude.toDouble()
+                ),
+                onBackClick = { navController.navigateUp() }
+            )
         }
 
 
