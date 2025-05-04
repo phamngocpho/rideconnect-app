@@ -253,7 +253,7 @@ fun SearchBar() {
                 .weight(1f)
                 .height(48.dp),
             colors = TextFieldDefaults.outlinedTextFieldColors(
-                backgroundColor = Color(0xFFF5F5F5),
+                backgroundColor = Color(0xFFFFFFFF),
                 focusedBorderColor = Color.LightGray,
                 unfocusedBorderColor = Color.LightGray
             ),
@@ -299,7 +299,7 @@ fun SavedLocations() {
                         .size(48.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.home_icon),
+                        painter = painterResource(id = R.drawable.home),
                         contentDescription = "Home",
                         modifier = Modifier
                             .size(24.dp)
