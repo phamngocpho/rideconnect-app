@@ -1,48 +1,77 @@
-package com.rideconnect.presentation.components.navigation
+package com.rideconnect.presentation.components
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import android.util.Log
+import com.rideconnect.presentation.navigation.NavigationItem
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.rideconnect.presentation.navigation.Screen
 
 @Composable
-fun AppBottomNavigation(
-    modifier: Modifier = Modifier,
-    selectedItem: Int = 0,
-    onItemSelected: (Int) -> Unit = {}
+fun AppBottomNavigationBar(navController: NavController) {
 
-) {
-    NavigationBar(modifier = modifier) {
-        NavigationBarItem(
-            selected = selectedItem == 0,
-            onClick = { onItemSelected(0) },
-            icon = { Icon(Icons.Default.Home, contentDescription = "Trang chủ") },
-            label = { Text("Trang chủ") }
-        )
-        NavigationBarItem(
-            selected = selectedItem == 1,
-            onClick = { onItemSelected(1) },
-            icon = { Icon(Icons.Default.History, contentDescription = "Hoạt động") },
-            label = { Text("Hoạt động") }
-        )
-        NavigationBarItem(
-            selected = selectedItem == 2,
-            onClick = { onItemSelected(2) },
-            icon = { Icon(Icons.Default.Explore, contentDescription = "Khám phá") },
-            label = { Text("Khám phá") }
-        )
-        NavigationBarItem(
-            selected = selectedItem == 3,
-            onClick = { onItemSelected(3) },
-            icon = { Icon(Icons.Default.Notifications, contentDescription = "Thông báo") },
-            label = { Text("Thông báo") }
-        )
-        NavigationBarItem(
-            selected = selectedItem == 4,
-            onClick = { onItemSelected(4) },
-            icon = { Icon(Icons.Default.Person, contentDescription = "Tài khoản") },
-            label = { Text("Tài khoản") }
-        )
+    val items = listOf(
+        Screen.Home,
+        Screen.Services,
+        Screen.Activity,
+        Screen.Profile
+    )
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    Log.d("Navigation", "Current route: $currentRoute")
+
+    NavigationBar(
+        containerColor = Color.White,
+        tonalElevation = 8.dp
+    ) {
+        items.forEach { item ->
+            val selected = currentRoute == item.route
+            NavigationBarItem(
+                icon = {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Image(
+                            painter = painterResource(item.iconResId),
+                            contentDescription = item.title,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Text(
+                            item.title,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (selected) Color(0xFF4CAF50) else Color.Gray
+                        )
+                    }
+                },
+                selected = selected,
+                onClick = {
+                    Log.d("Navigation", "Clicking item with route: ${item.route}")
+                    if (currentRoute != item.route) {
+                    navController.navigate(item.route) {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+                }
+            )
+        }
     }
 }

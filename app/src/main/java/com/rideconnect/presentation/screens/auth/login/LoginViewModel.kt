@@ -88,6 +88,8 @@ class LoginViewModel @Inject constructor(
                             isLoading = true
                         )
                     }
+
+                    is Resource.Idle -> {}
                 }
             } catch (e: Exception) {
                 _state.value = _state.value.copy(

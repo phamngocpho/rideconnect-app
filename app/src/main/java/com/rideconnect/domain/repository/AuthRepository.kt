@@ -8,8 +8,9 @@ interface AuthRepository {
     suspend fun login(phoneNumber: String, password: String): Resource<User>
     suspend fun register(fullName: String, phoneNumber: String, email: String?, password: String): Resource<User>
     suspend fun logout(): Resource<Unit>
-    fun getAuthToken(): Flow<String>
+    suspend fun getAuthToken(): Flow<String>
     fun getCurrentUser(): Flow<User?>
     suspend fun refreshToken(): Resource<String>
     fun getUserId(): Flow<String>
+    suspend fun isTokenValid(): Boolean
 }

@@ -42,7 +42,7 @@ class AuthRepositoryImpl @Inject constructor(
                     id = loginResponse.userId,
                     phoneNumber = phoneNumber,
                     email = null,
-                    fullName = "",
+                    fullName = loginResponse.fullName ?: "",
                     avatarUrl = null,
                     userType = loginResponse.userType ?: "CUSTOMER",
                     authToken = loginResponse.token,
@@ -58,7 +58,7 @@ class AuthRepositoryImpl @Inject constructor(
                 userDao.insertUser(userEntity)
 
                 // Lưu token vào AuthTokenProvider
-                tokenProvider.setToken(loginResponse.token)
+                tokenProvider.setToken(loginResponse.token, loginResponse.expiresAt)
 
                 // Đặt lại trạng thái phiên khi đăng nhập thành công
                 SessionManager.resetSessionExpired()
@@ -130,20 +130,26 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun logout(): Resource<Unit> {
         return try {
-            userDao.clearUserData()
-            // Xóa token trong AuthTokenProvider
             tokenProvider.clearToken()
-            // Đặt lại trạng thái phiên khi đăng xuất
-            SessionManager.resetSessionExpired()
+
+            // Xóa user khỏi database
+            userDao.clearUserData()
+
+            // Đặt lại trạng thái phiên
+            SessionManager.setSessionExpired(true)
             Resource.Success(Unit)
         } catch (e: Exception) {
             Resource.Error(message = e.message ?: "Đăng xuất thất bại")
         }
     }
 
-    override fun getAuthToken(): Flow<String> {
+    override suspend fun getAuthToken(): Flow<String> {
         // Sử dụng tokenProvider để lấy token thay vì truy vấn từ UserDao
         return tokenProvider.getTokenFlow().map { it ?: "" }
+    }
+
+    override suspend fun isTokenValid(): Boolean {
+        return tokenProvider.isTokenValid()
     }
 
     override fun getCurrentUser(): Flow<User?> {
