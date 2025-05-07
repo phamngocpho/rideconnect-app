@@ -182,8 +182,6 @@ dependencies {
     implementation ("com.mapbox.plugin:maps-gestures:11.11.0")
     implementation ("com.mapbox.plugin:maps-attribution:11.11.0")
 
-    implementation ("org.osmdroid:osmdroid-android:6.1.16")
-    implementation ("org.osmdroid:osmdroid-wms:6.1.16")
-    implementation ("org.osmdroid:osmdroid-mapsforge:6.1.16")
+    implementation ("com.mapbox.navigationcore:android:3.9.0-rc.1")
 
 }

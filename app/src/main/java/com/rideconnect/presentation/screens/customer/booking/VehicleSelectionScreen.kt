@@ -54,7 +54,7 @@ fun VehicleSelectionScreen(
         MapViewportState().apply {
             setCameraOptions {
                 center(
-                    com.mapbox.geojson.Point.fromLngLat(
+                    Point.fromLngLat(
                         pickupLocation.longitude,
                         pickupLocation.latitude
                     )
