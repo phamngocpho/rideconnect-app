@@ -151,7 +151,6 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun isTokenValid(): Boolean {
         return tokenProvider.isTokenValid()
     }
-
     override fun getCurrentUser(): Flow<User?> {
         return userDao.getCurrentUser().map { userEntity ->
             userEntity?.let {
@@ -176,7 +175,6 @@ class AuthRepositoryImpl @Inject constructor(
             }
         }
     }
-
     override suspend fun refreshToken(): Resource<String> {
         // Vì không sử dụng refresh token, chỉ trả về lỗi
         return Resource.Error("Refresh token không được hỗ trợ")

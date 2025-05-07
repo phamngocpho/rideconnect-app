@@ -46,7 +46,6 @@ enum class UserRole {
             return when (value?.uppercase()) {
                 "CUSTOMER" -> CUSTOMER
                 "DRIVER" -> DRIVER
-                "ADMIN" -> ADMIN
                 else -> UNKNOWN
             }
         }
