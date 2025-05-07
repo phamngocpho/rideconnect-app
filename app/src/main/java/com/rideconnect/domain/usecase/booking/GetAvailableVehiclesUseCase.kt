@@ -5,7 +5,7 @@ import com.rideconnect.domain.model.vehicle.Vehicle
 import com.rideconnect.domain.model.vehicle.VehicleType
 import javax.inject.Inject
 
-class GetAvailableVehiclesUseCase @Inject constructor() {
+class GetAvailableVehiclesUseCase @Inject  constructor() {
 
     suspend operator fun invoke(
         sourceLocation: Location,

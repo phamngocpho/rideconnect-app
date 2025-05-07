@@ -1,0 +1,53 @@
+package com.rideconnect.presentation.screens.auth.start
+
+import android.util.Log
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.rideconnect.domain.repository.AuthRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class StartAppViewModel @Inject constructor(
+    private val authRepository: AuthRepository
+) : ViewModel() {
+
+    private val _isLoggedIn = MutableStateFlow(false)
+    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn
+
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    init {
+        checkLoginStatus()
+    }
+
+    private fun checkLoginStatus() {
+        viewModelScope.launch {
+            try {
+                Log.d("StartAppViewModel", "Checking login status...")
+
+                // Kiểm tra token có hợp lệ không
+                val isTokenValid = authRepository.isTokenValid()
+                Log.d("StartAppViewModel", "Token valid: $isTokenValid")
+
+                // Kiểm tra user hiện tại
+                val currentUser = authRepository.getCurrentUser().first()
+                Log.d("StartAppViewModel", "Current user: ${currentUser?.id}")
+
+                // Nếu có token hợp lệ và user, coi như đã đăng nhập
+                _isLoggedIn.value = isTokenValid && currentUser != null
+                Log.d("StartAppViewModel", "Is logged in: ${_isLoggedIn.value}")
+            } catch (e: Exception) {
+                Log.e("StartAppViewModel", "Error checking login status: ${e.message}")
+                _isLoggedIn.value = false
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+}

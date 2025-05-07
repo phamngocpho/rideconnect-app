@@ -1,7 +1,12 @@
 package com.rideconnect.presentation.navigation
 
 import android.net.Uri
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -9,32 +14,54 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.rideconnect.domain.model.location.Location
+import com.rideconnect.presentation.components.AppBottomNavigationBar
+import com.rideconnect.presentation.screens.auth.start.StartApp
 import com.rideconnect.presentation.screens.auth.login.LoginScreen
+import com.rideconnect.presentation.screens.auth.register.RegisterScreen
 import com.rideconnect.presentation.screens.customer.booking.SearchingDriverScreen
 import com.rideconnect.presentation.screens.customer.booking.VehicleSelectionScreen
 //import com.rideconnect.presentation.screens.auth.register.RegisterScreen
 import com.rideconnect.presentation.screens.customer.dashboard.CustomerDashboardScreen
 import com.rideconnect.presentation.screens.customer.location.ConfirmLocationScreen
 import com.rideconnect.presentation.screens.customer.location.SearchLocationScreen
+import com.rideconnect.presentation.screens.customer.profile.CustomerProfileScreen
+import com.rideconnect.presentation.screens.customer.service.CustomerServiceScreen
+import com.rideconnect.presentation.screens.customer.trip.CurrentTripScreen
+import com.rideconnect.presentation.screens.customer.trip.HistoryTripScreen
 
-//import com.rideconnect.presentation.screens.driver.dashboard.DriverDashboardScreen
 
 @Composable
 fun RideConnectNavGraph(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = Screen.Login.route
+    startDestination: String = Screen.StartApp.route
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination
     ) {
+        composable(route = Screen.StartApp.route) {
+            StartApp(
+                onLoginClick = {
+                    navController.navigate(Screen.Login.route)
+                },
+                onCreateAccountClick = {
+                    navController.navigate(Screen.Register.route)
+                },
+                onNavigateToHome = {
+                    // Điều hướng thẳng đến màn hình Home nếu đã đăng nhập
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.StartApp.route) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(route = Screen.Login.route) {
             LoginScreen(
                 onNavigateToRegister = {
                     navController.navigate(Screen.Register.route)
                 },
                 onNavigateToCustomerDashboard = {
-                    navController.navigate(Screen.CustomerDashboard.route) {
+                    navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
@@ -46,20 +73,20 @@ fun RideConnectNavGraph(
             )
         }
 
-//        composable(route = Screen.Register.route) {
-//            RegisterScreen(
-//                onNavigateToLogin = {
-//                    navController.navigate(Screen.Login.route) {
-//                        popUpTo(Screen.Register.route) { inclusive = true }
-//                    }
-//                },
-//                onRegisterSuccess = {
-//                    navController.navigate(Screen.CustomerDashboard.route) {
-//                        popUpTo(Screen.Register.route) { inclusive = true }
-//                    }
-//                }
-//            )
-//        }
+        composable(route = Screen.Register.route) {
+            RegisterScreen(
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
+                },
+                    onRegisterSuccess = {
+                        navController.navigate(Screen.CustomerDashboard.route) {
+                            popUpTo(Screen.Register.route) { inclusive = true }
+                        }
+                    }
+            )
+        }
 
         composable(route = Screen.CustomerDashboard.route) {
             CustomerDashboardScreen(
@@ -230,5 +257,67 @@ fun RideConnectNavGraph(
 //                }
 //            )
 //        }
+
+        composable(route = Screen.Home.route) {
+            CustomerDashboardScreen(
+                onNavigate = { destination ->
+                    if (destination == "search_location") {
+                        navController.navigate(Screen.SearchLocation.route)
+                    } else {
+                        navController.navigate(destination)
+                    }
+                }
+            )
+        }
+        composable(Screen.Services.route) {
+            CustomerServiceScreen()
+        }
+        composable(Screen.Activity.route) {
+            HistoryTripScreen(navController = navController)
+        }
+        // Giữ nguyên route cho trip_details
+        composable(
+            "trip_details/{tripId}",
+            arguments = listOf(navArgument("tripId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val tripId = backStackEntry.arguments?.getString("tripId")
+            CurrentTripScreen(tripId = tripId ?: "", navController = navController)
+        }
+
+        // Thêm route mới để chuyển từ My Trips sang Ride History
+        composable("ride_history") {
+            HistoryTripScreen(navController = navController)
+        }
+        composable(Screen.Profile.route) {
+            CustomerProfileScreen(
+                onLogoutSuccess = {
+                    navController.navigate(Screen.StartApp.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+        // Trong NavGraph
+        composable(route = Screen.CustomerDashboard.route) {
+            Scaffold(
+                bottomBar = {
+                    AppBottomNavigationBar(navController = navController)
+                }
+            ) { paddingValues ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                ) {
+                    CustomerDashboardScreen(
+                        onNavigate = { destination ->
+                            navController.navigate(destination)
+                        }
+                    )
+                }
+            }
+        }
+
     }
+
 }

@@ -24,8 +24,8 @@ fun DashboardHeader(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(120.dp)
-            .background(Color(0xFFE6F4F1))
+            .height(80.dp)
+            .background(Color(0xFFE8F5E9))
     ) {
         // Thông tin chào mừng và thời tiết
         Row(

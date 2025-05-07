@@ -117,6 +117,9 @@ dependencies {
     // New
     implementation(libs.androidx.navigation.compose)
 
+    // Constranlayout
+    implementation ("androidx.constraintlayout:constraintlayout-compose:1.0.1")
+
     // Retrofit for API calls
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
