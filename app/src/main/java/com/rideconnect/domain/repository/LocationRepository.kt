@@ -7,6 +7,7 @@ import com.rideconnect.data.remote.dto.response.location.GeocodeResponse
 import com.rideconnect.data.remote.dto.response.location.PlaceAutocompleteResponse
 import com.rideconnect.data.remote.dto.response.location.PlaceDetailResponse
 import com.rideconnect.data.remote.dto.response.location.ReverseGeocodeResponse
+import com.rideconnect.data.repository.DistanceDuration
 import retrofit2.Response
 
 interface LocationRepository {
@@ -48,4 +49,25 @@ interface LocationRepository {
         destLatitude: Double,
         destLongitude: Double
     ): List<Point>
+
+    suspend fun getDistanceDuration(
+        sourceLatitude: Double,
+        sourceLongitude: Double,
+        destLatitude: Double,
+        destLongitude: Double
+    ): DistanceDuration?
+
+    suspend fun getDistance(
+        sourceLatitude: Double,
+        sourceLongitude: Double,
+        destLatitude: Double,
+        destLongitude: Double
+    ): Int
+
+    suspend fun getDuration(
+        sourceLatitude: Double,
+        sourceLongitude: Double,
+        destLatitude: Double,
+        destLongitude: Double
+    ): Int
 }

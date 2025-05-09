@@ -1,5 +1,6 @@
 package com.rideconnect.presentation.screens.customer.booking
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mapbox.geojson.Point
@@ -20,7 +21,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.math.pow
 
 data class VehicleSelectionUiState(
     val pickupLocation: Location? = null,
@@ -53,10 +53,12 @@ class VehicleSelectionViewModel @Inject constructor(
     val isLoadingRoute: StateFlow<Boolean> = _isLoadingRoute.asStateFlow()
 
     init {
+        Log.d("VehicleViewModel", "init: ViewModel created")
         loadPaymentMethods()
     }
 
     fun setPickupAndDestination(pickup: Location, destination: Location) {
+        Log.d("VehicleViewModel", "setPickupAndDestination: pickup=$pickup, destination=$destination")
         _uiState.update { currentState ->
             currentState.copy(
                 pickupLocation = pickup,
@@ -69,6 +71,7 @@ class VehicleSelectionViewModel @Inject constructor(
 
     private fun loadAvailableVehicles(pickup: Location, destination: Location) {
         viewModelScope.launch {
+            Log.d("VehicleViewModel", "loadAvailableVehicles coroutine started")
             _uiState.update { it.copy(isLoading = true) }
             try {
                 val vehicles = getAvailableVehiclesUseCase(
@@ -77,20 +80,30 @@ class VehicleSelectionViewModel @Inject constructor(
                     filterByType = _uiState.value.selectedVehicleType
                 )
 
-                // Đảm bảo luôn có một vehicle được chọn
-                val selectedVehicle = _uiState.value.selectedVehicle?.let { currentSelected ->
-                    // Nếu vehicle đang chọn vẫn còn trong danh sách mới thì giữ nguyên
-                    vehicles.find { it.id == currentSelected.id }
-                } ?: vehicles.firstOrNull() // Nếu không có vehicle nào được chọn hoặc vehicle đã chọn không còn trong danh sách, chọn vehicle đầu tiên
+                Log.d("VehicleViewModel", "getAvailableVehiclesUseCase returned ${vehicles.size} vehicles")
+                vehicles.forEach { Log.d("VehicleViewModel", "  Vehicle: ${it.id}, ${it.type}") }
+
+                val selectedVehicle = if (vehicles.isNotEmpty()) {
+                    _uiState.value.selectedVehicle?.let { currentSelected ->
+                        vehicles.find { it.id == currentSelected.id }
+                    } ?: vehicles.first()
+                } else {
+                    Log.w("VehicleViewModel", "  No vehicles available after use case")
+                    null
+                }
 
                 _uiState.update {
+                    Log.d("VehicleViewModel", "Updating uiState with ${vehicles.size} availableVehicles, selectedVehicle=${selectedVehicle?.id}")
                     it.copy(
                         availableVehicles = vehicles,
-                        selectedVehicle = selectedVehicle, // Luôn set selectedVehicle
+                        selectedVehicle = selectedVehicle,
                         isLoading = false
                     )
                 }
+                Log.d("VehicleViewModel", "uiState.availableVehicles size after update: ${_uiState.value.availableVehicles.size}")
+
             } catch (e: Exception) {
+                Log.e("VehicleViewModel", "Error loading vehicles: ${e.message}", e)
                 _uiState.update {
                     it.copy(
                         error = e.message ?: "Không thể tải danh sách phương tiện",
@@ -101,16 +114,14 @@ class VehicleSelectionViewModel @Inject constructor(
         }
     }
 
-
     fun filterByVehicleType(vehicleType: VehicleType?) {
+        Log.d("VehicleViewModel", "filterByVehicleType: $vehicleType")
         _uiState.update {
             it.copy(
                 selectedVehicleType = vehicleType
-                // Không reset selectedVehicle ở đây nữa
             )
         }
 
-        // Tải lại danh sách phương tiện với bộ lọc mới
         _uiState.value.pickupLocation?.let { pickup ->
             _uiState.value.destinationLocation?.let { destination ->
                 loadAvailableVehicles(pickup, destination)
@@ -118,18 +129,18 @@ class VehicleSelectionViewModel @Inject constructor(
         }
     }
 
-
-
-    // Cập nhật hàm loadRoutePoints để sử dụng Flow
     private fun loadRoutePoints(pickup: Location, destination: Location) {
+        Log.d("VehicleViewModel", "loadRoutePoints: pickup=$pickup, destination=$destination")
         _isLoadingRoute.value = true
 
         getRoutePointsUseCase(source = pickup, destination = destination)
             .onEach { points ->
+                Log.d("VehicleViewModel", "getRoutePointsUseCase emitted ${points.size} points")
                 _routePoints.value = points
                 _isLoadingRoute.value = false
             }
             .catch { error ->
+                Log.e("VehicleViewModel", "Error loading route points: ${error.message}", error)
                 _isLoadingRoute.value = false
                 _uiState.update {
                     it.copy(error = error.message ?: "Không thể tải tuyến đường")
@@ -139,20 +150,28 @@ class VehicleSelectionViewModel @Inject constructor(
     }
 
     fun selectVehicle(vehicle: Vehicle) {
+        Log.d("VehicleViewModel", "selectVehicle: ${vehicle.id}")
         _uiState.update { it.copy(selectedVehicle = vehicle) }
     }
 
     private fun loadPaymentMethods() {
         viewModelScope.launch {
+            Log.d("VehicleViewModel", "loadPaymentMethods coroutine started")
             try {
                 val paymentMethods = getPaymentMethodsUseCase()
+                Log.d("VehicleViewModel", "getPaymentMethodsUseCase returned ${paymentMethods.size} methods")
+                paymentMethods.forEach { Log.d("VehicleViewModel", "  Method: ${it.id}") }
+
                 _uiState.update {
                     it.copy(
                         paymentMethods = paymentMethods,
                         selectedPaymentMethod = paymentMethods.firstOrNull()
                     )
                 }
+                Log.d("VehicleViewModel", "uiState.paymentMethods size after update: ${_uiState.value.paymentMethods.size}")
+
             } catch (e: Exception) {
+                Log.e("VehicleViewModel", "Error loading payment methods: ${e.message}", e)
                 _uiState.update {
                     it.copy(error = e.message ?: "Không thể tải phương thức thanh toán")
                 }
@@ -161,6 +180,7 @@ class VehicleSelectionViewModel @Inject constructor(
     }
 
     fun selectPaymentMethod(paymentMethodId: String) {
+        Log.d("VehicleViewModel", "selectPaymentMethod: $paymentMethodId")
         val selectedMethod = _uiState.value.paymentMethods.find { it.id == paymentMethodId }
         selectedMethod?.let {
             _uiState.update { state -> state.copy(selectedPaymentMethod = it) }
@@ -168,41 +188,7 @@ class VehicleSelectionViewModel @Inject constructor(
     }
 
     fun clearError() {
+        Log.d("VehicleViewModel", "clearError")
         _uiState.update { it.copy(error = null) }
-    }
-
-    fun getEstimatedPrice(): Double {
-        return _uiState.value.selectedVehicle?.price ?: 0.0
-    }
-
-    fun getEstimatedPickupTime(): Int {
-        return _uiState.value.selectedVehicle?.estimatedPickupTime ?: 0
-    }
-
-    fun getEstimatedDistance(): Double {
-        val pickup = _uiState.value.pickupLocation
-        val destination = _uiState.value.destinationLocation
-
-        if (pickup == null || destination == null) return 0.0
-
-        return calculateDistance(pickup, destination)
-    }
-
-    private fun calculateDistance(pickup: Location, destination: Location): Double {
-        // Công thức Haversine để tính khoảng cách giữa hai điểm trên Trái Đất
-        val R = 6371.0 // Bán kính Trái Đất tính bằng km
-
-        val lat1 = Math.toRadians(pickup.latitude)
-        val lon1 = Math.toRadians(pickup.longitude)
-        val lat2 = Math.toRadians(destination.latitude)
-        val lon2 = Math.toRadians(destination.longitude)
-
-        val dlon = lon2 - lon1
-        val dlat = lat2 - lat1
-
-        val a = Math.sin(dlat / 2).pow(2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dlon / 2).pow(2)
-        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-
-        return R * c // Khoảng cách tính bằng km
     }
 }

@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Response
 import javax.inject.Inject
+data class DistanceDuration(val distance: Int, val duration: Int)
 
 class LocationRepositoryImpl @Inject constructor(
     private val goongMapApi: GoongMapApi
@@ -162,6 +163,59 @@ class LocationRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getDistanceDuration(
+        sourceLatitude: Double,
+        sourceLongitude: Double,
+        destLatitude: Double,
+        destLongitude: Double
+    ): DistanceDuration? = withContext(Dispatchers.IO) {
+        val origin = "$sourceLatitude,$sourceLongitude"
+        val destination = "$destLatitude,$destLongitude"
+
+        try {
+            val response = safeApiCall {
+                goongMapApi.getDirections(
+                    origin = origin,
+                    destination = destination,
+                    vehicle = "car"
+                )
+            }
+
+            if (response != null && response.isSuccessful) {
+                val directionsResponse = response.body()
+                directionsResponse?.routes?.firstOrNull()?.let { firstRoute ->
+                    val distance = firstRoute.legs?.sumOf { it.distance?.value ?: 0 } ?: 0
+                    val duration = firstRoute.legs?.sumOf { it.duration?.value ?: 0 } ?: 0
+                    return@withContext DistanceDuration(distance, duration)
+                }
+            } else {
+                Log.e(TAG, "getDistanceDuration API call failed: ${response?.code()} - ${response?.errorBody()?.string()}")
+                return@withContext null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception in getDistanceDuration: ${e.message}", e)
+            return@withContext null
+        }
+    }
+
+    override suspend fun getDistance(
+        sourceLatitude: Double,
+        sourceLongitude: Double,
+        destLatitude: Double,
+        destLongitude: Double
+    ): Int {
+        return getDistanceDuration(sourceLatitude, sourceLongitude, destLatitude, destLongitude)?.distance ?: 0
+    }
+
+    override suspend fun getDuration(
+        sourceLatitude: Double,
+        sourceLongitude: Double,
+        destLatitude: Double,
+        destLongitude: Double
+    ): Int {
+        return getDistanceDuration(sourceLatitude, sourceLongitude, destLatitude, destLongitude)?.duration ?: 0
+    }
+
     // Hàm giải mã polyline thành danh sách các điểm
     private fun decodePolyline(encoded: String): List<Point> {
         Log.d(TAG, "decodePolyline: độ dài encoded string = ${encoded.length}")
@@ -214,6 +268,18 @@ class LocationRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Lỗi khi giải mã polyline: ${e.message}", e)
             return emptyList()
+        }
+    }
+
+    // Hàm tiện ích để xử lý an toàn các cuộc gọi API
+    private suspend fun <T> safeApiCall(apiCall: suspend () -> Response<T>): Response<T>? {
+        return withContext(Dispatchers.IO) {
+            try {
+                apiCall.invoke()
+            } catch (e: Exception) {
+                Log.e(TAG, "API call exception: ${e.message}", e)
+                null
+            }
         }
     }
 }

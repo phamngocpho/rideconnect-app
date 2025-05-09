@@ -208,14 +208,16 @@ fun RideConnectNavGraph(
                     pickupLocation = sourceLocation,
                     destinationLocation = destinationLocation ?: sourceLocation,
                     onBackClick = { navController.popBackStack() },
-                    onBookingConfirmed = {
+                    onBookingConfirmed = { vehicleType, vehicleId, paymentMethodId -> // Updated lambda
+                        // Now you have access to vehicleType, vehicleId, and paymentMethodId here
                         navController.navigate(
                             Screen.SearchingDriver.createRoute(
                                 pickup = sourceLocation,
-                                destination = destinationLocation ?: sourceLocation
+                                destination = destinationLocation ?: sourceLocation,
+                                vehicleType = vehicleType
                             )
                         )
-                    }
+                    },
                 )
             }
         }
