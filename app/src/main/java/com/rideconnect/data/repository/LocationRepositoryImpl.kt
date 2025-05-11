@@ -224,16 +224,15 @@ class LocationRepositoryImpl @Inject constructor(
         Log.d(TAG, "updateDriverLocation: Chuẩn bị gửi vị trí - lat=${location.latitude()}, lng=${location.longitude()}")
 
         try {
-            // Lấy thời gian hiện tại
             val currentTimeMillis = System.currentTimeMillis()
 
             val request = LocationUpdateRequest(
                 latitude = location.latitude(),
                 longitude = location.longitude(),
-                heading = null, // Optional - để null
-                speed = null, // Optional - để null
-                bearing = 0f, // Sử dụng giá trị mặc định
-                accuracy = 0f, // Sử dụng giá trị mặc định
+                heading = null,
+                speed = null,
+                bearing = 0f,
+                accuracy = 0f,
                 timestamp = currentTimeMillis
             )
 
