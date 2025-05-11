@@ -2,6 +2,7 @@ package com.rideconnect.domain.repository
 
 import com.mapbox.geojson.Point
 import com.rideconnect.data.remote.dto.request.location.NearbyDriversRequest
+import com.rideconnect.data.remote.dto.request.location.LocationUpdateRequest
 import com.rideconnect.data.remote.dto.response.location.DirectionsResponse
 import com.rideconnect.data.remote.dto.response.location.DistanceMatrixResponse
 import com.rideconnect.data.remote.dto.response.location.GeocodeResponse
@@ -27,6 +28,7 @@ interface LocationRepository {
     suspend fun getGeocoding(address: String): Response<GeocodeResponse>
 
     suspend fun getReverseGeocoding(latlng: String): Response<GeocodeResponse>
+    suspend fun updateDriverLocation(location: Point): Response<Unit>
 
     suspend fun getDistanceMatrix(
         origins: String,

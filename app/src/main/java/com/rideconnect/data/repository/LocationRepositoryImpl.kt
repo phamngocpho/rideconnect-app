@@ -5,6 +5,7 @@ import com.mapbox.geojson.Point
 import com.rideconnect.data.remote.api.GoongMapApi
 import com.rideconnect.data.remote.api.LocationApi
 import com.rideconnect.data.remote.dto.request.location.NearbyDriversRequest
+import com.rideconnect.data.remote.dto.request.location.LocationUpdateRequest
 import com.rideconnect.data.remote.dto.response.location.DirectionsResponse
 import com.rideconnect.data.remote.dto.response.location.DistanceMatrixResponse
 import com.rideconnect.data.remote.dto.response.location.GeocodeResponse
@@ -297,5 +298,40 @@ class LocationRepositoryImpl @Inject constructor(
             Log.e(TAG, "getNearbyDrivers: failed with code=${response.code()}, error=${response.errorBody()?.string()}")
         }
         return response
+    }
+    override suspend fun updateDriverLocation(location: Point): Response<Unit> {
+        Log.d(TAG, "updateDriverLocation: Chuẩn bị gửi vị trí - lat=${location.latitude()}, lng=${location.longitude()}")
+
+        try {
+            val currentTimeMillis = System.currentTimeMillis()
+
+            val request = LocationUpdateRequest(
+                latitude = location.latitude(),
+                longitude = location.longitude(),
+                heading = null,
+                speed = null,
+                bearing = 0f,
+                accuracy = 0f,
+                timestamp = currentTimeMillis
+            )
+
+            Log.d(TAG, "updateDriverLocation: Gửi request - lat=${request.latitude}, lng=${request.longitude}, " +
+                    "bearing=${request.bearing}, accuracy=${request.accuracy}, timestamp=${request.timestamp}")
+
+            val response = locationApi.updateLocation(request)
+
+            if (response.isSuccessful) {
+                Log.d(TAG, "updateDriverLocation: API call thành công - HTTP ${response.code()}")
+            } else {
+                Log.e(TAG, "updateDriverLocation: API call thất bại - HTTP ${response.code()}, message: ${response.message()}")
+                val errorBody = response.errorBody()?.string()
+                Log.e(TAG, "updateDriverLocation: Error body: $errorBody")
+            }
+
+            return response
+        } catch (e: Exception) {
+            Log.e(TAG, "updateDriverLocation: Exception khi gọi API - ${e.message}", e)
+            throw e
+        }
     }
 }

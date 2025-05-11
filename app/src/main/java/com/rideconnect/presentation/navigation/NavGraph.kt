@@ -27,6 +27,7 @@ import com.rideconnect.presentation.screens.customer.profile.CustomerProfileScre
 import com.rideconnect.presentation.screens.customer.service.CustomerServiceScreen
 import com.rideconnect.presentation.screens.customer.trip.CurrentTripScreen
 import com.rideconnect.presentation.screens.customer.trip.HistoryTripScreen
+import com.rideconnect.presentation.screens.driver.dashboard.DriverDashboardScreen
 
 
 @Composable
@@ -252,15 +253,15 @@ fun RideConnectNavGraph(
         }
 
 
-//        composable(route = Screen.DriverDashboard.route) {
-//            DriverDashboardScreen(
-//                onLogout = {
-//                    navController.navigate(Screen.Login.route) {
-//                        popUpTo(navController.graph.id) { inclusive = true }
-//                    }
-//                }
-//            )
-//        }
+        composable(route = Screen.DriverDashboard.route) {
+            DriverDashboardScreen(
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
+                }
+            )
+        }
 
         composable(route = Screen.Home.route) {
             CustomerDashboardScreen(
