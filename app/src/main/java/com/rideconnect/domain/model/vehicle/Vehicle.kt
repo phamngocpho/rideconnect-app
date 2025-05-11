@@ -1,12 +1,12 @@
 package com.rideconnect.domain.model.vehicle
 
 enum class VehicleType {
-    CAR,
-    CAR_PREMIUM,
-    BIKE,
-    BIKE_PLUS,
-    TAXI,
-    VAN
+    car,
+    car_premium,
+    bike,
+    bike_plus,
+    taxi,
+    van
 }
 
 data class Vehicle(

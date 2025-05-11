@@ -237,7 +237,7 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideLocationApi(@Named("goongRetrofit") retrofit: Retrofit): LocationApi {
+    fun provideLocationApi(retrofit: Retrofit): LocationApi {
         return retrofit.create(LocationApi::class.java)
     }
 

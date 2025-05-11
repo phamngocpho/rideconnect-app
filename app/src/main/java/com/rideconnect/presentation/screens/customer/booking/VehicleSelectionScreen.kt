@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
 import com.mapbox.maps.extension.compose.animation.viewport.MapViewportState
@@ -29,7 +30,8 @@ fun VehicleSelectionScreen(
     pickupLocation: Location,
     destinationLocation: Location,
     onBackClick: () -> Unit,
-    onBookingConfirmed: (vehicleType: String, vehicleId: String, paymentMethodId: String) -> Unit,
+    onBookingConfirmed: (vehicleType: String, vehicleId: String?, paymentMethodId: String?) -> Unit,
+    navController: NavController,
     viewModel: VehicleSelectionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -40,9 +42,6 @@ fun VehicleSelectionScreen(
     val pickupPoint = remember(pickupLocation) {
         Point.fromLngLat(pickupLocation.longitude, pickupLocation.latitude)
     }
-    val scope = rememberCoroutineScope()
-
-    Log.d("VehicleSelectScreen", "Recomposing with pickup=$pickupLocation, dest=$destinationLocation")
 
     LaunchedEffect(pickupLocation, destinationLocation) {
         Log.d("VehicleSelectScreen", "LaunchedEffect: pickup=$pickupLocation, dest=$destinationLocation")
@@ -72,7 +71,6 @@ fun VehicleSelectionScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Map container
             Box(
                 modifier = Modifier
                     .weight(0.4f)
@@ -95,7 +93,6 @@ fun VehicleSelectionScreen(
                 )
             }
 
-            // Vehicle selection panel
             Surface(
                 modifier = Modifier
                     .weight(0.6f)
@@ -108,7 +105,6 @@ fun VehicleSelectionScreen(
                         .fillMaxSize()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    // Route info header
                     LocationRouteHeader(
                         sourceLocation = pickupLocation,
                         destinationLocation = destinationLocation,
@@ -116,7 +112,6 @@ fun VehicleSelectionScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    // Vehicle type filter
                     VehicleTypeFilter(
                         selectedType = uiState.selectedVehicleType,
                         onTypeSelected = { vehicleType ->
@@ -128,7 +123,6 @@ fun VehicleSelectionScreen(
                             .padding(bottom = 8.dp)
                     )
 
-                    // Vehicle list
                     Log.d("VehicleSelectScreen", "Available vehicles size: ${uiState.availableVehicles.size}")
                     VehicleList(
                         vehicles = uiState.availableVehicles,
@@ -148,7 +142,6 @@ fun VehicleSelectionScreen(
                         }
                     }
 
-                    // Bottom options row
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -177,13 +170,11 @@ fun VehicleSelectionScreen(
                         }
                     }
 
-                    // Book trip button
                     BookTripButton(
                         selectedVehicle = uiState.selectedVehicle,
                         onBookRide = {
                             uiState.selectedVehicle?.let { vehicle ->
                                 uiState.selectedPaymentMethod?.let { paymentMethod ->
-                                    Log.d("VehicleSelectScreen", "Booking confirmed: vehicleType=${vehicle.type}, vehicleId=${vehicle.id}, paymentMethodId=${paymentMethod.id}")
                                     onBookingConfirmed(
                                         vehicle.type.toString(),
                                         vehicle.id,
@@ -201,7 +192,6 @@ fun VehicleSelectionScreen(
             }
         }
 
-        // Back button overlay
         IconButton(
             onClick = onBackClick,
             modifier = Modifier

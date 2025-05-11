@@ -3,9 +3,12 @@ package com.rideconnect.data.repository
 import android.util.Log
 import com.mapbox.geojson.Point
 import com.rideconnect.data.remote.api.GoongMapApi
+import com.rideconnect.data.remote.api.LocationApi
+import com.rideconnect.data.remote.dto.request.location.NearbyDriversRequest
 import com.rideconnect.data.remote.dto.response.location.DirectionsResponse
 import com.rideconnect.data.remote.dto.response.location.DistanceMatrixResponse
 import com.rideconnect.data.remote.dto.response.location.GeocodeResponse
+import com.rideconnect.data.remote.dto.response.location.NearbyDriversResponse
 import com.rideconnect.data.remote.dto.response.location.PlaceAutocompleteResponse
 import com.rideconnect.data.remote.dto.response.location.PlaceDetailResponse
 import com.rideconnect.data.remote.dto.response.location.ReverseGeocodeResponse
@@ -17,7 +20,8 @@ import javax.inject.Inject
 data class DistanceDuration(val distance: Int, val duration: Int)
 
 class LocationRepositoryImpl @Inject constructor(
-    private val goongMapApi: GoongMapApi
+    private val goongMapApi: GoongMapApi,
+    private val locationApi: LocationApi
 ) : LocationRepository {
     private val TAG = "LocationRepositoryImpl"
 
@@ -281,5 +285,17 @@ class LocationRepositoryImpl @Inject constructor(
                 null
             }
         }
+    }
+
+    override suspend fun getNearbyDrivers(request: NearbyDriversRequest): Response<NearbyDriversResponse> {
+        Log.d(TAG, "getNearbyDrivers: request=latitude=${request.latitude}, longitude=${request.longitude}, radiusInKm=${request.radiusInKm}, vehicleType=${request.vehicleType}")
+        val response = locationApi.getNearbyDrivers(request)
+        if (response.isSuccessful) {
+            val responseBody = response.body()
+            Log.d(TAG, "getNearbyDrivers: response=success, drivers=${responseBody?.drivers?.size ?: 0}, count=${responseBody?.count ?: 0}")
+        } else {
+            Log.e(TAG, "getNearbyDrivers: failed with code=${response.code()}, error=${response.errorBody()?.string()}")
+        }
+        return response
     }
 }

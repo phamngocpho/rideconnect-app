@@ -21,12 +21,12 @@ fun VehicleIcon(
     tint: Color = MaterialTheme.colorScheme.primary
 ) {
     val icon: ImageVector = when (vehicleType) {
-        VehicleType.CAR -> Icons.Filled.DirectionsCar
-        VehicleType.CAR_PREMIUM -> Icons.Outlined.DirectionsCarFilled
-        VehicleType.BIKE -> Icons.Filled.TwoWheeler
-        VehicleType.BIKE_PLUS -> Icons.Filled.TwoWheeler
-        VehicleType.TAXI -> Icons.Outlined.LocalTaxi
-        VehicleType.VAN -> Icons.Outlined.AirportShuttle
+        VehicleType.car -> Icons.Filled.DirectionsCar
+        VehicleType.car_premium -> Icons.Outlined.DirectionsCarFilled
+        VehicleType.bike -> Icons.Filled.TwoWheeler
+        VehicleType.bike_plus -> Icons.Filled.TwoWheeler
+        VehicleType.taxi -> Icons.Outlined.LocalTaxi
+        VehicleType.van -> Icons.Outlined.AirportShuttle
     }
 
     Icon(

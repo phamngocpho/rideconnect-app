@@ -15,34 +15,32 @@ class GetRouteInfoUseCase @Inject constructor(
     private val goongApi: GoongMapApi
 ) {
 
-    operator fun invoke(origin: Location, destination: Location): Flow<RouteInfo?> = flow {  // Changed to Flow<RouteInfo?>
-        try {
-            val response = goongApi.getDirections(
-                origin = "${origin.latitude},${origin.longitude}",
-                destination = "${destination.latitude},${destination.longitude}",
-                vehicle = "car"
-            )
+    operator fun invoke(origin: Location, destination: Location): Flow<RouteInfo?> = flow {
+        val response = goongApi.getDirections(
+            origin = "${origin.latitude},${origin.longitude}",
+            destination = "${destination.latitude},${destination.longitude}",
+            vehicle = "car"
+        )
 
-            if (response.isSuccessful) {
-                val route = response.body()?.routes?.firstOrNull()
-                if (route != null) {
-                    val distance = route.legs.firstOrNull()?.distance?.value ?: 0
-                    val duration = route.legs.firstOrNull()?.duration?.value ?: 0
-                    emit(RouteInfo(distance = distance, duration = duration))
-                } else {
-                    Log.w("GetRouteInfoUseCase", "No route found in API response")
-                    emit(null) // Emit null to indicate no route, handled by catch
-                }
+        if (response.isSuccessful) {
+            val route = response.body()?.routes?.firstOrNull()
+            if (route != null) {
+                val leg = route.legs.firstOrNull()
+                emit(RouteInfo(
+                    distance = leg?.distance?.value ?: 0,
+                    duration = leg?.duration?.value ?: 0
+                ))
             } else {
-                Log.e("GetRouteInfoUseCase", "API error: ${response.code()} - ${response.message()}")
-                throw IOException("Error fetching route info: ${response.code()} - ${response.message()}") // Throw exception
+                Log.w("GetRouteInfoUseCase", "No route found")
+                emit(null)
             }
-        } catch (e: IOException) {
-            Log.e("GetRouteInfoUseCase", "Network or parsing error: ${e.message}", e)
-            throw e  // Re-throw the exception to be caught in GetAvailableVehiclesUseCase
-        } catch (e: Exception) {
-            Log.e("GetRouteInfoUseCase", "Unexpected error: ${e.message}", e)
-            throw e
+        } else {
+            Log.e("GetRouteInfoUseCase", "API Error: ${response.code()}")
+            emit(null)  // Emit null instead of throwing
         }
+    }.catch { e ->
+        Log.e("GetRouteInfoUseCase", "Exception in flow: ${e.message}", e)
+        emit(null) // Emit null to prevent AbortFlowException
     }
+
 }

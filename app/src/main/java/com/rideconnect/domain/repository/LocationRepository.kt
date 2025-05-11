@@ -1,9 +1,11 @@
 package com.rideconnect.domain.repository
 
 import com.mapbox.geojson.Point
+import com.rideconnect.data.remote.dto.request.location.NearbyDriversRequest
 import com.rideconnect.data.remote.dto.response.location.DirectionsResponse
 import com.rideconnect.data.remote.dto.response.location.DistanceMatrixResponse
 import com.rideconnect.data.remote.dto.response.location.GeocodeResponse
+import com.rideconnect.data.remote.dto.response.location.NearbyDriversResponse
 import com.rideconnect.data.remote.dto.response.location.PlaceAutocompleteResponse
 import com.rideconnect.data.remote.dto.response.location.PlaceDetailResponse
 import com.rideconnect.data.remote.dto.response.location.ReverseGeocodeResponse
@@ -70,4 +72,7 @@ interface LocationRepository {
         destLatitude: Double,
         destLongitude: Double
     ): Int
+
+    suspend fun getNearbyDrivers(request: NearbyDriversRequest): Response<NearbyDriversResponse>
+
 }

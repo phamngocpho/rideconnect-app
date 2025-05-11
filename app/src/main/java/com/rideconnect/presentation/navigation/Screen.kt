@@ -31,4 +31,10 @@ sealed class Screen(val route: String) {
             return "searching_driver/${pickup.latitude}/${pickup.longitude}/${destination.latitude}/${destination.longitude}/${vehicleType}"
         }
     }
+    object TRIP_CONFIRMATION : Screen("trip_confirmation/{latitude}/{longitude}/{radiusInKm}/{vehicleType}") {
+        //  Add helper function to build the route with arguments
+        fun createRoute(latitude: Double, longitude: Double, radiusInKm: Double?, vehicleType: String): String {
+            return "trip_confirmation/$latitude/$longitude/${radiusInKm}/$vehicleType"
+        }
+    }
 }
