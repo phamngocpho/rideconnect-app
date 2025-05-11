@@ -40,8 +40,8 @@ object ApiConstants {
     const val TRIP_CANCEL_ENDPOINT = "trip/{tripId}/cancel"
 
     // Location Endpoints
-    const val LOCATION_UPDATE_ENDPOINT = "location/update"
-    const val NEARBY_DRIVERS_ENDPOINT = "location/drivers/nearby"
+    const val LOCATION_UPDATE_ENDPOINT = "locations/update"
+    const val NEARBY_DRIVERS_ENDPOINT = "locations/drivers/nearby"
 
     // Payment Endpoints
     const val PAYMENT_METHODS_ENDPOINT = "payment/methods"
