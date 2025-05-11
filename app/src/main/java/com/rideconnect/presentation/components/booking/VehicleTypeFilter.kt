@@ -22,12 +22,12 @@ fun VehicleTypeFilter(
 ) {
     val vehicleTypes = listOf(
         null to "Tất cả",
-        VehicleType.CAR to "Xe hơi",
-        VehicleType.CAR_PREMIUM to "Xe sang",
-        VehicleType.BIKE to "Xe máy",
-        VehicleType.BIKE_PLUS to "Xe máy+",
-        VehicleType.TAXI to "Taxi",
-        VehicleType.VAN to "Xe 7 chỗ"
+        VehicleType.car to "Xe hơi",
+        VehicleType.car_premium to "Xe sang",
+        VehicleType.bike to "Xe máy",
+        VehicleType.bike_plus to "Xe máy+",
+        VehicleType.taxi to "Taxi",
+        VehicleType.van to "Xe 7 chỗ"
     )
 
     ScrollableTabRow(

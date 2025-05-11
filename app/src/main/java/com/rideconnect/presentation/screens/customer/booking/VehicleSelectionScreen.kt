@@ -1,5 +1,6 @@
 package com.rideconnect.presentation.screens.customer.booking
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -14,10 +15,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
 import com.mapbox.maps.extension.compose.animation.viewport.MapViewportState
 import com.rideconnect.domain.model.location.Location
+import com.rideconnect.domain.model.vehicle.Vehicle
 import com.rideconnect.presentation.components.booking.*
 import com.rideconnect.presentation.components.common.LoadingStateContent
 import com.rideconnect.presentation.components.maps.RouteMapComponent
@@ -27,7 +30,8 @@ fun VehicleSelectionScreen(
     pickupLocation: Location,
     destinationLocation: Location,
     onBackClick: () -> Unit,
-    onBookingConfirmed: () -> Unit,
+    onBookingConfirmed: (vehicleType: String, vehicleId: String?, paymentMethodId: String?) -> Unit,
+    navController: NavController,
     viewModel: VehicleSelectionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -38,14 +42,15 @@ fun VehicleSelectionScreen(
     val pickupPoint = remember(pickupLocation) {
         Point.fromLngLat(pickupLocation.longitude, pickupLocation.latitude)
     }
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(pickupLocation, destinationLocation) {
+        Log.d("VehicleSelectScreen", "LaunchedEffect: pickup=$pickupLocation, dest=$destinationLocation")
         viewModel.setPickupAndDestination(pickupLocation, destinationLocation)
     }
 
     uiState.error?.let { error ->
         LaunchedEffect(error) {
+            Log.e("VehicleSelectScreen", "Error: $error")
             viewModel.clearError()
         }
     }
@@ -66,7 +71,6 @@ fun VehicleSelectionScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Map container
             Box(
                 modifier = Modifier
                     .weight(0.4f)
@@ -89,7 +93,6 @@ fun VehicleSelectionScreen(
                 )
             }
 
-            // Vehicle selection panel
             Surface(
                 modifier = Modifier
                     .weight(0.6f)
@@ -102,7 +105,6 @@ fun VehicleSelectionScreen(
                         .fillMaxSize()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    // Route info header
                     LocationRouteHeader(
                         sourceLocation = pickupLocation,
                         destinationLocation = destinationLocation,
@@ -110,10 +112,10 @@ fun VehicleSelectionScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    // Vehicle type filter
                     VehicleTypeFilter(
                         selectedType = uiState.selectedVehicleType,
                         onTypeSelected = { vehicleType ->
+                            Log.d("VehicleSelectScreen", "VehicleTypeFilter selected: $vehicleType")
                             viewModel.filterByVehicleType(vehicleType)
                         },
                         modifier = Modifier
@@ -121,20 +123,25 @@ fun VehicleSelectionScreen(
                             .padding(bottom = 8.dp)
                     )
 
-                    // Vehicle list
+                    Log.d("VehicleSelectScreen", "Available vehicles size: ${uiState.availableVehicles.size}")
                     VehicleList(
                         vehicles = uiState.availableVehicles,
                         isLoading = uiState.isLoading,
                         onVehicleSelected = { vehicle ->
+                            Log.d("VehicleSelectScreen", "Vehicle selected: ${vehicle.id}")
                             viewModel.selectVehicle(vehicle)
                         },
                         selectedVehicleId = uiState.selectedVehicle?.id,
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxWidth()
-                    )
+                    ) { vehicle: Vehicle ->
+                        Column {
+                            Text("Fare: ${vehicle.price}")
+                            Text("Wait Time: ${vehicle.estimatedPickupTime} mins")
+                        }
+                    }
 
-                    // Bottom options row
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -153,6 +160,7 @@ fun VehicleSelectionScreen(
                                 availablePaymentMethods = uiState.paymentMethods,
                                 selectedMethod = selectedMethod,
                                 onPaymentMethodSelected = { paymentMethod ->
+                                    Log.d("VehicleSelectScreen", "PaymentMethod selected: ${paymentMethod.id}")
                                     viewModel.selectPaymentMethod(paymentMethod.id)
                                 },
                                 modifier = Modifier
@@ -162,10 +170,19 @@ fun VehicleSelectionScreen(
                         }
                     }
 
-                    // Book trip button
                     BookTripButton(
                         selectedVehicle = uiState.selectedVehicle,
-                        onBookRide = onBookingConfirmed,
+                        onBookRide = {
+                            uiState.selectedVehicle?.let { vehicle ->
+                                uiState.selectedPaymentMethod?.let { paymentMethod ->
+                                    onBookingConfirmed(
+                                        vehicle.type.toString(),
+                                        vehicle.id,
+                                        paymentMethod.id
+                                    )
+                                }
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 4.dp)
@@ -175,7 +192,6 @@ fun VehicleSelectionScreen(
             }
         }
 
-        // Back button overlay
         IconButton(
             onClick = onBackClick,
             modifier = Modifier

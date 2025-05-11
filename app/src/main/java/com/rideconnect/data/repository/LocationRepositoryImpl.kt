@@ -4,10 +4,12 @@ import android.util.Log
 import com.mapbox.geojson.Point
 import com.rideconnect.data.remote.api.GoongMapApi
 import com.rideconnect.data.remote.api.LocationApi
+import com.rideconnect.data.remote.dto.request.location.NearbyDriversRequest
 import com.rideconnect.data.remote.dto.request.location.LocationUpdateRequest
 import com.rideconnect.data.remote.dto.response.location.DirectionsResponse
 import com.rideconnect.data.remote.dto.response.location.DistanceMatrixResponse
 import com.rideconnect.data.remote.dto.response.location.GeocodeResponse
+import com.rideconnect.data.remote.dto.response.location.NearbyDriversResponse
 import com.rideconnect.data.remote.dto.response.location.PlaceAutocompleteResponse
 import com.rideconnect.data.remote.dto.response.location.PlaceDetailResponse
 import com.rideconnect.data.remote.dto.response.location.ReverseGeocodeResponse
@@ -16,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Response
 import javax.inject.Inject
+data class DistanceDuration(val distance: Int, val duration: Int)
 
 class LocationRepositoryImpl @Inject constructor(
     private val goongMapApi: GoongMapApi,
@@ -165,6 +168,59 @@ class LocationRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getDistanceDuration(
+        sourceLatitude: Double,
+        sourceLongitude: Double,
+        destLatitude: Double,
+        destLongitude: Double
+    ): DistanceDuration? = withContext(Dispatchers.IO) {
+        val origin = "$sourceLatitude,$sourceLongitude"
+        val destination = "$destLatitude,$destLongitude"
+
+        try {
+            val response = safeApiCall {
+                goongMapApi.getDirections(
+                    origin = origin,
+                    destination = destination,
+                    vehicle = "car"
+                )
+            }
+
+            if (response != null && response.isSuccessful) {
+                val directionsResponse = response.body()
+                directionsResponse?.routes?.firstOrNull()?.let { firstRoute ->
+                    val distance = firstRoute.legs?.sumOf { it.distance?.value ?: 0 } ?: 0
+                    val duration = firstRoute.legs?.sumOf { it.duration?.value ?: 0 } ?: 0
+                    return@withContext DistanceDuration(distance, duration)
+                }
+            } else {
+                Log.e(TAG, "getDistanceDuration API call failed: ${response?.code()} - ${response?.errorBody()?.string()}")
+                return@withContext null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception in getDistanceDuration: ${e.message}", e)
+            return@withContext null
+        }
+    }
+
+    override suspend fun getDistance(
+        sourceLatitude: Double,
+        sourceLongitude: Double,
+        destLatitude: Double,
+        destLongitude: Double
+    ): Int {
+        return getDistanceDuration(sourceLatitude, sourceLongitude, destLatitude, destLongitude)?.distance ?: 0
+    }
+
+    override suspend fun getDuration(
+        sourceLatitude: Double,
+        sourceLongitude: Double,
+        destLatitude: Double,
+        destLongitude: Double
+    ): Int {
+        return getDistanceDuration(sourceLatitude, sourceLongitude, destLatitude, destLongitude)?.duration ?: 0
+    }
+
     // Hàm giải mã polyline thành danh sách các điểm
     private fun decodePolyline(encoded: String): List<Point> {
         Log.d(TAG, "decodePolyline: độ dài encoded string = ${encoded.length}")
@@ -220,6 +276,29 @@ class LocationRepositoryImpl @Inject constructor(
         }
     }
 
+    // Hàm tiện ích để xử lý an toàn các cuộc gọi API
+    private suspend fun <T> safeApiCall(apiCall: suspend () -> Response<T>): Response<T>? {
+        return withContext(Dispatchers.IO) {
+            try {
+                apiCall.invoke()
+            } catch (e: Exception) {
+                Log.e(TAG, "API call exception: ${e.message}", e)
+                null
+            }
+        }
+    }
+
+    override suspend fun getNearbyDrivers(request: NearbyDriversRequest): Response<NearbyDriversResponse> {
+        Log.d(TAG, "getNearbyDrivers: request=latitude=${request.latitude}, longitude=${request.longitude}, radiusInKm=${request.radiusInKm}, vehicleType=${request.vehicleType}")
+        val response = locationApi.getNearbyDrivers(request)
+        if (response.isSuccessful) {
+            val responseBody = response.body()
+            Log.d(TAG, "getNearbyDrivers: response=success, drivers=${responseBody?.drivers?.size ?: 0}, count=${responseBody?.count ?: 0}")
+        } else {
+            Log.e(TAG, "getNearbyDrivers: failed with code=${response.code()}, error=${response.errorBody()?.string()}")
+        }
+        return response
+    }
     override suspend fun updateDriverLocation(location: Point): Response<Unit> {
         Log.d(TAG, "updateDriverLocation: Chuẩn bị gửi vị trí - lat=${location.latitude()}, lng=${location.longitude()}")
 
@@ -255,5 +334,4 @@ class LocationRepositoryImpl @Inject constructor(
             throw e
         }
     }
-
 }

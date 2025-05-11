@@ -20,7 +20,6 @@ import com.rideconnect.presentation.screens.auth.login.LoginScreen
 import com.rideconnect.presentation.screens.auth.register.RegisterScreen
 import com.rideconnect.presentation.screens.customer.booking.SearchingDriverScreen
 import com.rideconnect.presentation.screens.customer.booking.VehicleSelectionScreen
-//import com.rideconnect.presentation.screens.auth.register.RegisterScreen
 import com.rideconnect.presentation.screens.customer.dashboard.CustomerDashboardScreen
 import com.rideconnect.presentation.screens.customer.location.ConfirmLocationScreen
 import com.rideconnect.presentation.screens.customer.location.SearchLocationScreen
@@ -81,11 +80,11 @@ fun RideConnectNavGraph(
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 },
-                    onRegisterSuccess = {
-                        navController.navigate(Screen.CustomerDashboard.route) {
-                            popUpTo(Screen.Register.route) { inclusive = true }
-                        }
+                onRegisterSuccess = {
+                    navController.navigate(Screen.CustomerDashboard.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
                     }
+                }
             )
         }
 
@@ -142,7 +141,7 @@ fun RideConnectNavGraph(
                 navArgument("destinationLatitude") { type = NavType.FloatType; defaultValue = 0f },
                 navArgument("destinationLongitude") { type = NavType.FloatType; defaultValue = 0f },
                 navArgument("destinationAddress") { type = NavType.StringType; nullable = true },
-                navArgument("destinationName") { type = NavType.StringType; nullable = true }
+                navArgument("destinationName") { type = NavType.StringType; nullable = true },
             )
         ) { backStackEntry ->
             val sourceLatitude = backStackEntry.arguments?.getFloat("sourceLatitude") ?: 0f
@@ -209,14 +208,16 @@ fun RideConnectNavGraph(
                     pickupLocation = sourceLocation,
                     destinationLocation = destinationLocation ?: sourceLocation,
                     onBackClick = { navController.popBackStack() },
-                    onBookingConfirmed = {
+                    onBookingConfirmed = { vehicleType, vehicleId, paymentMethodId ->
                         navController.navigate(
                             Screen.SearchingDriver.createRoute(
                                 pickup = sourceLocation,
-                                destination = destinationLocation ?: sourceLocation
+                                destination = destinationLocation ?: sourceLocation,
+                                vehicleType = vehicleType
                             )
                         )
-                    }
+                    },
+                    navController = navController
                 )
             }
         }
@@ -234,6 +235,7 @@ fun RideConnectNavGraph(
             val sourceLongitude = backStackEntry.arguments?.getFloat("sourceLongitude") ?: 0f
             val destLatitude = backStackEntry.arguments?.getFloat("destLatitude") ?: 0f
             val destLongitude = backStackEntry.arguments?.getFloat("destLongitude") ?: 0f
+            val vehicleType = backStackEntry.arguments?.getString("vehicleType") ?: "" // Extract vehicleType
 
             SearchingDriverScreen(
                 pickupLocation = Location(
@@ -244,7 +246,9 @@ fun RideConnectNavGraph(
                     latitude = destLatitude.toDouble(),
                     longitude = destLongitude.toDouble()
                 ),
-                onBackClick = { navController.navigateUp() }
+                onBackClick = { navController.navigateUp() },
+                navController = navController, // Pass navController here
+                requestedVehicleType = vehicleType,
             )
         }
 

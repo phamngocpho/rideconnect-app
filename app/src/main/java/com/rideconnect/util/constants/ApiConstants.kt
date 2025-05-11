@@ -41,7 +41,7 @@ object ApiConstants {
 
     // Location Endpoints
     const val LOCATION_UPDATE_ENDPOINT = "locations/update"
-    const val NEARBY_DRIVERS_ENDPOINT = "locations/drivers/nearby"
+    const val NEARBY_DRIVERS_ENDPOINT = "locations/nearby-drivers"
 
     // Payment Endpoints
     const val PAYMENT_METHODS_ENDPOINT = "payment/methods"

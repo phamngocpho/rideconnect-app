@@ -17,7 +17,8 @@ fun VehicleList(
     isLoading: Boolean,
     onVehicleSelected: (Vehicle) -> Unit,
     selectedVehicleId: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    content: @Composable (vehicle: Vehicle) -> Unit // This is the trailing lambda
 ) {
     Box(modifier = modifier) {
         if (isLoading) {

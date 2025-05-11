@@ -1,5 +1,6 @@
 package com.rideconnect.presentation.screens.customer.booking
 
+import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,20 +13,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
+import com.rideconnect.data.remote.dto.response.location.DriverInfo
 import com.rideconnect.domain.model.location.Location
 import com.rideconnect.presentation.components.maps.SearchingMapComponent
+import com.rideconnect.presentation.navigation.Screen
 
 @Composable
 fun SearchingDriverScreen(
     pickupLocation: Location,
     destinationLocation: Location,
     onBackClick: () -> Unit,
-    viewModel: VehicleSelectionViewModel = hiltViewModel()
+    navController: NavController,
+    requestedVehicleType: String,
+    viewModel: SearchingDriverViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     var mapView by remember { mutableStateOf<MapView?>(null) }
+
+    LaunchedEffect(Unit) {
+        viewModel.findNearbyDrivers(pickupLocation, requestedVehicleType)
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         SearchingMapComponent(
@@ -49,16 +61,34 @@ fun SearchingDriverScreen(
             )
         }
 
-        // Animation ở giữa màn hình
+        // Content Display
         Box(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            SearchingPulseAnimation()
+            if (uiState.isLoading) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    SearchingPulseAnimation()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Đang tìm tài xế...", fontSize = 20.sp)
+                }
+            } else if (uiState.driverInfo != null) {
+                DriverFoundContent(
+                    driverInfo = uiState.driverInfo!!,
+                    onStartTrip = {
+                        // Navigate to the next screen
+                        navController.navigate(
+                            "${Screen.TRIP_CONFIRMATION.route}/${pickupLocation.latitude}/${pickupLocation.longitude}/${destinationLocation.latitude}/${destinationLocation.longitude}/${requestedVehicleType}"
+                        )
+                    }
+                )
+            } else if (uiState.error != null) {
+                Text("Error: ${uiState.error}")
+            }
         }
     }
 }
+
 
 @Composable
 private fun SearchingPulseAnimation(
@@ -100,5 +130,30 @@ private fun SearchingPulseAnimation(
                     shape = CircleShape
                 )
         )
+    }
+}
+
+@Composable
+private fun DriverFoundContent(
+    driverInfo: DriverInfo,
+    onStartTrip: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("Đã tìm thấy tài xế!", fontSize = 24.sp)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("ID: ${driverInfo.id}")
+        Text("Số xe: ${driverInfo.plateNumber}")
+        Text("Loại xe: ${driverInfo.vehicleType}")
+        Text("Khoảng cách: ${driverInfo.distance.toInt()} mét")
+        Text("Thời gian đến dự kiến: ${driverInfo.estimatedArrivalTime ?: "Chưa có"} phút")
+        driverInfo.name?.let { Text("Tên: $it") } ?: Text("Tên: Không có")
+        driverInfo.rating?.let { Text("Đánh giá: $it") } ?: Text("Đánh giá: Chưa có")
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(onClick = onStartTrip) {
+            Text("Bắt đầu chuyến đi")
+        }
     }
 }
