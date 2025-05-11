@@ -16,6 +16,9 @@ sealed class Screen(val route: String) {
     data object Services : NavigationItem("services", "Services", R.drawable.services_icon)
     data object Activity : NavigationItem("activity", "Activity", R.drawable.activity_icon)
     data object Profile : NavigationItem("profile", "Profile", R.drawable.person_icon)
+    data object DriverHome : Screen("driver_home")
+    data object DriverActivity : Screen("driver_activity")
+    data object DriverProfile : Screen("driver_profile")
 
     data object VehicleSelection : Screen("vehicle_selection_screen/{sourceLocationJson}/{destinationLocationJson}") {
         fun createRoute(sourceLocation: Location, destinationLocation: Location?): String {

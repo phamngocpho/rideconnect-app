@@ -28,6 +28,8 @@ import com.rideconnect.presentation.screens.customer.service.CustomerServiceScre
 import com.rideconnect.presentation.screens.customer.trip.CurrentTripScreen
 import com.rideconnect.presentation.screens.customer.trip.HistoryTripScreen
 import com.rideconnect.presentation.screens.driver.dashboard.DriverDashboardScreen
+import com.rideconnect.presentation.screens.driver.profile.DriverProfileScreen
+import com.rideconnect.presentation.screens.driver.trips.ActiveTripScreeen
 
 
 @Composable
@@ -47,9 +49,15 @@ fun RideConnectNavGraph(
                 onCreateAccountClick = {
                     navController.navigate(Screen.Register.route)
                 },
-                onNavigateToHome = {
-                    // Điều hướng thẳng đến màn hình Home nếu đã đăng nhập
+                onNavigateToCustomerHome = {
+                    // Điều hướng đến màn hình Customer Dashboard nếu là CUSTOMER
                     navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.StartApp.route) { inclusive = true }
+                    }
+                },
+                onNavigateToDriverHome = {
+                    // Điều hướng đến màn hình Driver Dashboard nếu là DRIVER
+                    navController.navigate(Screen.DriverHome.route) {
                         popUpTo(Screen.StartApp.route) { inclusive = true }
                     }
                 }
@@ -66,7 +74,7 @@ fun RideConnectNavGraph(
                     }
                 },
                 onNavigateToDriverDashboard = {
-                    navController.navigate(Screen.DriverDashboard.route) {
+                    navController.navigate(Screen.DriverHome.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 }
@@ -253,13 +261,14 @@ fun RideConnectNavGraph(
         }
 
 
-        composable(route = Screen.DriverDashboard.route) {
+        composable(route = Screen.DriverHome.route) {
             DriverDashboardScreen(
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(navController.graph.id) { inclusive = true }
                     }
-                }
+                },
+                navController = navController
             )
         }
 
@@ -321,6 +330,32 @@ fun RideConnectNavGraph(
                     )
                 }
             }
+        }
+
+//        composable(route = Screen.DriverHome.route) {
+//            DriverDashboardScreen(
+//                onLogout = {
+//                    navController.navigate(Screen.Login.route) {
+//                        popUpTo(navController.graph.id) { inclusive = true }
+//                    }
+//                }
+//            )
+//        }
+        composable(route = Screen.DriverActivity.route) {
+            ActiveTripScreeen(
+                navController = navController
+            ) // Cần tạo màn hình này
+        }
+//
+        composable(route = Screen.DriverProfile.route) {
+            DriverProfileScreen(
+                onLogoutSuccess = {
+                    navController.navigate(Screen.StartApp.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },// Cần tạo màn hình này
+                navController = navController
+            )
         }
 
     }
