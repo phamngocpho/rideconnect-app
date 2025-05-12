@@ -37,14 +37,14 @@ class AuthRepositoryImpl @Inject constructor(
 
             if (response.isSuccessful && response.body() != null) {
                 val loginResponse = response.body()!!
-
+                val userRole = loginResponse.userType ?: "CUSTOMER"
                 val userEntity = UserEntity(
                     id = loginResponse.userId,
                     phoneNumber = phoneNumber,
                     email = null,
                     fullName = loginResponse.fullName ?: "",
                     avatarUrl = null,
-                    userType = loginResponse.userType ?: "CUSTOMER",
+                    userType = userRole,
                     authToken = loginResponse.token,
                     refreshToken = "",
                     tokenExpiryDate = if (loginResponse.expiresAt != null)

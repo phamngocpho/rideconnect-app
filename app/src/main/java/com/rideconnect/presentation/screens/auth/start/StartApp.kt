@@ -28,18 +28,27 @@ fun StartApp(
     viewModel: StartAppViewModel = hiltViewModel(),
     onLoginClick: () -> Unit = {},
     onCreateAccountClick: () -> Unit = {},
-    onNavigateToHome: () -> Unit = {}
+    onNavigateToCustomerHome: () -> Unit = {},
+    onNavigateToDriverHome: () -> Unit = {}
 ){
-    val context = LocalContext.current
     val isLoggedIn by viewModel.isLoggedIn.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val userRole by viewModel.userRole.collectAsState()
 
     // Kiểm tra trạng thái đăng nhập và điều hướng nếu đã đăng nhập
-    LaunchedEffect(isLoggedIn) {
-        Log.d("StartApp", "LaunchedEffect: isLoggedIn = $isLoggedIn")
+    LaunchedEffect(isLoggedIn, userRole) {
+        Log.d("StartApp", "LaunchedEffect: isLoggedIn = $isLoggedIn, userRole = $userRole")
         if (isLoggedIn) {
-            Log.d("StartApp", "Navigating to home")
-            onNavigateToHome()
+            when (userRole) {
+                "DRIVER" -> {
+                    Log.d("StartApp", "Navigating to driver home")
+                    onNavigateToDriverHome()
+                }
+                else -> {
+                    Log.d("StartApp", "Navigating to customer home")
+                    onNavigateToCustomerHome()
+                }
+            }
         }
     }
 

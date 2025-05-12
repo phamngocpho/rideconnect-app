@@ -46,11 +46,13 @@ class AuthTokenProvider @Inject constructor(
     }
 
     // Xóa token
+    // Trong AuthTokenProvider.kt
     suspend fun clearToken() {
-        Log.d(TAG, "Clearing token")
-        preferenceManager.setPreference(AUTH_TOKEN_KEY, EMPTY_TOKEN)
-        preferenceManager.setPreference(TOKEN_EXPIRY_KEY, "")
+        Log.d(TAG, "Clearing token completely")
+        preferenceManager.removePreference(AUTH_TOKEN_KEY)  // Thay vì set empty token
+        preferenceManager.removePreference(TOKEN_EXPIRY_KEY)
     }
+
 
     // Kiểm tra token có hợp lệ không
     suspend fun isTokenValid(): Boolean {
