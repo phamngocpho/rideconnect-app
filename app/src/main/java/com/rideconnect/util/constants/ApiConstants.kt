@@ -33,10 +33,10 @@ object ApiConstants {
     const val DRIVER_STATUS_ENDPOINT = "driver/status"
 
     // Trip Endpoints
-    const val TRIP_CREATE_ENDPOINT = "trip/create"
-    const val TRIP_HISTORY_ENDPOINT = "trip/history"
-    const val TRIP_DETAILS_ENDPOINT = "trip/{tripId}"
-    const val TRIP_STATUS_ENDPOINT = "trip/{tripId}/status"
+    const val TRIP_CREATE_ENDPOINT = "trips"
+    const val TRIP_HISTORY_ENDPOINT = "trips/history"
+    const val TRIP_DETAILS_ENDPOINT = "trips/{tripId}"
+    const val TRIP_STATUS_ENDPOINT = "trips/{tripId}/status"
     const val TRIP_CANCEL_ENDPOINT = "trip/{tripId}/cancel"
 
     // Location Endpoints

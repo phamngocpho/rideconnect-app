@@ -8,16 +8,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rideconnect.presentation.components.dashboard.*
-import com.rideconnect.presentation.components.menu.ServiceItem
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -25,10 +24,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.rememberNavController
 import com.rideconnect.R
-import com.rideconnect.presentation.components.AppBottomNavigationBar
 
 @Composable
 fun CustomerDashboardScreen(
@@ -340,133 +336,11 @@ fun SavedLocations() {
                 }
 
                 Icon(
-                    Icons.Default.KeyboardArrowRight,
+                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
                     tint = Color.Gray
                 )
             }
         }
     }
-}
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun CustomerDashboardScreenPreview() {
-    CustomerDashboardScreen(
-        onNavigate = {}
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DashboardHeaderPreview() {
-    DashboardHeader(
-        userName = "Phạm",
-        temperature = "27°C",
-        clubName = "VinClub"
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ServiceMenuGridPreview() {
-    val services = remember {
-        listOf(
-            ServiceItem(
-                id = "car",
-                title = "Ô tô",
-                icon = Icons.Default.DirectionsCar
-            ),
-            ServiceItem(
-                id = "bike",
-                title = "Xe máy",
-                icon = Icons.Default.TwoWheeler
-            ),
-            ServiceItem(
-                id = "delivery",
-                title = "Giao hàng",
-                icon = Icons.Default.LocalShipping
-            ),
-            ServiceItem(
-                id = "airport",
-                title = "Ô tô sân bay",
-                icon = Icons.Default.FlightTakeoff
-            ),
-            ServiceItem(
-                id = "vinfast",
-                title = "Mua xe VinFast",
-                icon = Icons.Default.CarRental
-            ),
-            ServiceItem(
-                id = "tour",
-                title = "Xanh Tour",
-                icon = Icons.Default.Tour
-            ),
-            ServiceItem(
-                id = "intercity",
-                title = "Xanh Liên Tỉnh",
-                icon = Icons.Default.Route
-            ),
-            ServiceItem(
-                id = "taxi",
-                title = "Taxi",
-                icon = Icons.Default.LocalTaxi
-            )
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SearchBarPreview() {
-    SearchBar(
-        text = "Bạn muốn đi đâu?",
-        onClick = {},
-        modifier = Modifier.padding(16.dp)
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PromotionBannerPreview() {
-    PromotionBanner(
-        title = "ĐÀ NẴNG TRONG XANH",
-        promotionValues = listOf("50K", "50K"),
-        modifier = Modifier.padding(16.dp)
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PageIndicatorPreview() {
-    PageIndicator(
-        pageCount = 3,
-        currentPage = 0,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun TravelBannerPreview() {
-    MaterialTheme {
-        Surface {
-            TravelBanner()
-        }
-    }
-}
-@Preview(showBackground = true)
-@Composable
-fun RideTypeCardPreview() {
-    RideTypeCardWithImage(
-        RideTypeInfo(
-            title = "Group Ride",
-            backgroundColor = Color(0xFFAEE4B3),
-            imageResId = R.drawable.group_ride
-        )
-    )
 }
