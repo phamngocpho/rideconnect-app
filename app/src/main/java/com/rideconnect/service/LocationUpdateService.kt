@@ -127,4 +127,6 @@ class LocationUpdateService : Service() {
         private const val CHANNEL_ID = "location_channel"
         private const val NOTIFICATION_ID = 1
     }
+
+
 }

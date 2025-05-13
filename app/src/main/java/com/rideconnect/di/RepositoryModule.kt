@@ -1,8 +1,10 @@
 package com.rideconnect.di
 
 import com.rideconnect.data.repository.AuthRepositoryImpl
+import com.rideconnect.data.repository.DriverRepositoryImpl
 import com.rideconnect.data.repository.LocationRepositoryImpl
 import com.rideconnect.domain.repository.AuthRepository
+import com.rideconnect.domain.repository.DriverRepository
 import com.rideconnect.domain.repository.LocationRepository
 import dagger.Binds
 import dagger.Module
@@ -25,4 +27,10 @@ abstract class RepositoryModule {
     abstract fun bindLocationRepository(
         locationRepositoryImpl: LocationRepositoryImpl
     ): LocationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDriverRepository(
+        driverRepositoryImpl: DriverRepositoryImpl
+    ): DriverRepository
 }

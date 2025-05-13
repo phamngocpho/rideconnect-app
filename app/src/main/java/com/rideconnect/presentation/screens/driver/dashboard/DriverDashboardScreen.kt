@@ -36,100 +36,134 @@ fun DriverDashboardScreen(
     navController: NavController,
     viewModel: DriverDashboardViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val isOnline by viewModel.isOnline.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val pendingStatus by viewModel.pendingStatus.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Hiển thị dialog khi có lỗi và có trạng thái đang chờ
+    if (errorMessage != null && pendingStatus != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelPendingStatusUpdate() },
+            title = { Text("Lỗi cập nhật trạng thái") },
+            text = { Text(errorMessage ?: "Đã xảy ra lỗi khi cập nhật trạng thái.") },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.clearErrorMessage()
+                    viewModel.retryStatusUpdate(context)
+                }) {
+                    Text("Thử lại")
+                }
+            },
+            dismissButton = {
+                Button(onClick = {
+                    viewModel.clearErrorMessage()
+                    viewModel.cancelPendingStatusUpdate()
+                }) {
+                    Text("Hủy")
+                }
+            }
+        )
+    }
+    // Hiển thị snackbar cho các lỗi khác (không có trạng thái đang chờ)
+    else if (errorMessage != null) {
+        LaunchedEffect(errorMessage) {
+            snackbarHostState.showSnackbar(
+                message = errorMessage ?: "Đã xảy ra lỗi.",
+                actionLabel = "Đóng",
+                duration = SnackbarDuration.Short
+            )
+            viewModel.clearErrorMessage()
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = { DriverBottomNavigation(navController) }
     ) { paddingValues ->
-        Box(
+        // Nội dung màn hình
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White)
                 .padding(paddingValues)
+                .padding(16.dp)
         ) {
-            Column(
+            StatusToggle(viewModel, context)
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Hiển thị thông báo trạng thái hiện tại
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .fillMaxWidth()
+                    .background(
+                        color = if (isOnline) Color(0xFFE8F5E9) else Color(0xFFFFEBEE),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .padding(16.dp)
             ) {
-                // Status Toggle
-                StatusToggle(viewModel = viewModel)
+                Text(
+                    text = if (isOnline)
+                        "Đang tìm kiếm khách hàng, vui lòng đợi."
+                    else
+                        "Bạn đang Offline, không thể nhận cuốc xe.",
+                    fontSize = 14.sp,
+                    color = if (isOnline) Color(0xFF2E7D32) else Color(0xFFD32F2F)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Hiển thị phần tìm kiếm chỉ khi đang online
+            if (isOnline) {
+                // Location Indicator
+                LocationIndicator()
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Looking for Rider Text
+                Text(
+                    text = "Đang tìm kiếm hành khách",
+                    fontSize = 16.sp,
+                    color = Color.Gray
+                )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Hiển thị thông báo trạng thái hiện tại
+                // Illustration
+                RideIllustration()
+            } else {
+                // Hiển thị thông báo khi offline
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            color = if (isOnline) Color(0xFFE8F5E9) else Color(0xFFFFEBEE),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .padding(16.dp)
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = if (isOnline)
-                            "Đang tìm kiếm khách hàng, vui lòng đợi."
-                        else
-                            "Bạn đang Offline, không thể nhận cuốc xe.",
-                        fontSize = 14.sp,
-                        color = if (isOnline) Color(0xFF2E7D32) else Color(0xFFD32F2F)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Hiển thị phần tìm kiếm chỉ khi đang online
-                if (isOnline) {
-                    // Location Indicator
-                    LocationIndicator()
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Looking for Rider Text
-                    Text(
-                        text = "Đang tìm kiếm hành khách",
-                        fontSize = 16.sp,
-                        color = Color.Gray
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // Illustration
-                    RideIllustration()
-                } else {
-                    // Hiển thị thông báo khi offline
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ride_illustration),
-                                contentDescription = "Offline Illustration",
-                                modifier = Modifier.size(200.dp),
-                                alpha = 0.5f
-                            )
+                        Image(
+                            painter = painterResource(id = R.drawable.ride_illustration),
+                            contentDescription = "Offline Illustration",
+                            modifier = Modifier.size(200.dp),
+                            alpha = 0.5f
+                        )
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                            Text(
-                                text = "Chuyển sang trạng thái Online để bắt đầu nhận cuốc",
-                                fontSize = 16.sp,
-                                color = Color.Gray,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+                        Text(
+                            text = "Chuyển sang trạng thái Online để bắt đầu nhận cuốc",
+                            fontSize = 16.sp,
+                            color = Color.Gray,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
-
-                Spacer(modifier = Modifier.weight(1f))
             }
+
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
@@ -140,7 +174,13 @@ fun StatusToggle(
     context: Context = LocalContext.current
 ) {
     val isOnline by viewModel.isOnline.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val pendingStatus by viewModel.pendingStatus.collectAsState() // Thu thập pending status
 
+    // Xác định trạng thái loading cho từng nút
+    val isLoadingOffline = isLoading && pendingStatus == "offline"
+
+    val isLoadingOnline = isLoading && pendingStatus == "online"
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -162,26 +202,35 @@ fun StatusToggle(
                 .padding(4.dp)
                 .clip(RoundedCornerShape(40.dp))
                 .background(if (!isOnline) Color(0xFFE57373) else Color.White)
-                .clickable { viewModel.toggleOnlineStatus(context, false) },
+                .clickable(enabled = !isLoading) { viewModel.toggleOnlineStatus(context, false) },
             contentAlignment = Alignment.Center
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Offline",
-                    tint = if (!isOnline) Color.White else Color.Gray,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "Offline",
+            if (isLoadingOffline) {
+                // Hiển thị loading indicator khi đang chuyển sang offline
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
                     color = if (!isOnline) Color.White else Color.Gray,
-                    fontWeight = if (!isOnline) FontWeight.Bold else FontWeight.Normal,
-                    fontSize = 14.sp
+                    strokeWidth = 2.dp
                 )
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Offline",
+                        tint = if (!isOnline) Color.White else Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Offline",
+                        color = if (!isOnline) Color.White else Color.Gray,
+                        fontWeight = if (!isOnline) FontWeight.Bold else FontWeight.Normal,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
 
@@ -193,26 +242,35 @@ fun StatusToggle(
                 .padding(4.dp)
                 .clip(RoundedCornerShape(40.dp))
                 .background(if (isOnline) Color(0xFF7BC67E) else Color.White)
-                .clickable { viewModel.toggleOnlineStatus(context, true) },
+                .clickable(enabled = !isLoading) { viewModel.toggleOnlineStatus(context, true) },
             contentAlignment = Alignment.Center
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Online",
-                    tint = if (isOnline) Color.White else Color.Gray,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "Online",
+            if (isLoadingOnline) {
+                // Hiển thị loading indicator khi đang chuyển sang online
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
                     color = if (isOnline) Color.White else Color.Gray,
-                    fontWeight = if (isOnline) FontWeight.Bold else FontWeight.Normal,
-                    fontSize = 14.sp
+                    strokeWidth = 2.dp
                 )
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Online",
+                        tint = if (isOnline) Color.White else Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Online",
+                        color = if (isOnline) Color.White else Color.Gray,
+                        fontWeight = if (isOnline) FontWeight.Bold else FontWeight.Normal,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
     }
