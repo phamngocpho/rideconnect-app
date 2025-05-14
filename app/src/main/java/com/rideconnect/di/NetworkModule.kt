@@ -20,7 +20,8 @@ import java.util.Properties
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import javax.inject.Singleton
-
+import com.google.gson.FieldNamingPolicy
+import com.google.gson.Gson
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
@@ -42,17 +43,36 @@ object NetworkModule {
             }
         }
     }
+    @Provides
+    @Singleton
+    fun provideGson(): Gson {
+        return GsonBuilder()
+            .setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+            .setLenient()
+            .create()
+    }
 
     @Provides
     @Singleton
     fun provideBaseUrl(): String {
-        return try {
+        val baseUrl = try {
             val buildConfigClass = Class.forName("com.rideconnect.BuildConfig")
             val field = buildConfigClass.getField("API_BASE_URL")
             field.get(null) as String
         } catch (e: Exception) {
             properties.getProperty("api.base.url", "http://10.0.2.2:8080/api/")
         }
+        Log.d("NetworkModule", "Providing baseUrl: $baseUrl")
+        return baseUrl
+    }
+
+    @Provides
+    @Singleton
+    @Named("webSocketUrl")
+    fun provideWebSocketUrl(baseUrl: String): String {
+        val webSocketUrl = baseUrl.replace("http", "ws")
+        Log.d("NetworkModule", "Providing webSocketUrl: $webSocketUrl")
+        return webSocketUrl
     }
 
     @Provides
@@ -80,7 +100,6 @@ object NetworkModule {
             properties.getProperty("goong.api.key", "")
         }
 
-        // Log một phần của API key để kiểm tra
         if (apiKey.isBlank()) {
             Log.e("GoongAPI", "WARNING: API key is blank or missing!")
         } else {
@@ -115,7 +134,6 @@ object NetworkModule {
         networkInterceptor: NetworkInterceptor
     ): OkHttpClient {
         val loggingInterceptor = HttpLoggingInterceptor { message ->
-            // Thay đổi từ đây: Thêm Log.d để xem logs trong Logcat
             Log.d("API_LOG", message)
         }.apply {
             val isDebug = try {
@@ -123,14 +141,9 @@ object NetworkModule {
                 val debugField = buildConfigClass.getField("DEBUG")
                 debugField.getBoolean(null)
             } catch (e: Exception) {
-                true // Mặc định là true nếu không thể lấy được giá trị DEBUG
+                true
             }
-
-            level = if (isDebug) {
-                HttpLoggingInterceptor.Level.BODY
-            } else {
-                HttpLoggingInterceptor.Level.NONE
-            }
+            level = if (isDebug) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
         }
 
         return OkHttpClient.Builder()
@@ -142,7 +155,6 @@ object NetworkModule {
             .writeTimeout(30, TimeUnit.SECONDS)
             .build()
     }
-
 
     @Provides
     @Singleton
@@ -161,16 +173,12 @@ object NetworkModule {
                 val original = chain.request()
                 val originalHttpUrl = original.url
 
-                // Kiểm tra API key trước khi thêm vào request
                 if (goongApiKey.isBlank()) {
                     Log.e("GoongAPI", "ERROR: API key is blank, request will likely fail!")
                 }
 
-                // Thử cả hai cách thêm API key
                 val url = originalHttpUrl.newBuilder()
                     .addQueryParameter("api_key", goongApiKey)
-                    // Nếu cách trên không hoạt động, thử cách này
-                    // .addQueryParameter("key", goongApiKey)
                     .build()
 
                 val requestBuilder = original.newBuilder()
@@ -191,17 +199,13 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(
         okHttpClient: OkHttpClient,
-        baseUrl: String
+        baseUrl: String,
+        gson: Gson // Thêm tham số Gson
     ): Retrofit {
-        // Cấu hình Gson với setLenient(true)
-        val gson = GsonBuilder()
-            .setLenient() // Cho phép xử lý JSON không chuẩn
-            .create()
-
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create(gson)) // Sử dụng gson đã cấu hình
+            .addConverterFactory(GsonConverterFactory.create(gson)) // Sử dụng gson được tiêm vào
             .build()
     }
 
@@ -210,16 +214,13 @@ object NetworkModule {
     @Named("goongRetrofit")
     fun provideGoongRetrofit(
         @Named("goongApiBaseUrl") baseUrl: String,
-        @Named("goongOkHttpClient") okHttpClient: OkHttpClient
+        @Named("goongOkHttpClient") okHttpClient: OkHttpClient,
+        gson: Gson // Thêm tham số Gson
     ): Retrofit {
-        val gson = GsonBuilder()
-            .setLenient()
-            .create()
-
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create(gson))
+            .addConverterFactory(GsonConverterFactory.create(gson)) // Sử dụng gson được tiêm vào
             .build()
     }
 
@@ -243,15 +244,17 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideTripApi(retrofit: Retrofit): TripApi {
+        return retrofit.create(TripApi::class.java)
+    }
+
+    @Provides
+    @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor { message ->
             Log.d("API_LOG", message)
         }.apply {
-            level = if (BuildConfig.DEBUG) {
-                HttpLoggingInterceptor.Level.BODY
-            } else {
-                HttpLoggingInterceptor.Level.NONE
-            }
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY else HttpLoggingInterceptor.Level.NONE
         }
     }
 

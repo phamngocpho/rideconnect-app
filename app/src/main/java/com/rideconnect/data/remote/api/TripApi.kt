@@ -29,5 +29,5 @@ interface TripApi {
     ): Response<TripDetailsResponse>
 
     @DELETE(ApiConstants.TRIP_CANCEL_ENDPOINT)
-    suspend fun cancelTrip(@Path("tripId") tripId: String): Response<Unit>
+    suspend fun cancelTrip(@Path("tripId") tripId: String, reason: String): Response<Unit>
 }

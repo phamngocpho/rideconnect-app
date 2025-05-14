@@ -1,6 +1,5 @@
 package com.rideconnect.presentation.screens.customer.booking
 
-import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,16 +11,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
-import com.rideconnect.data.remote.dto.response.location.DriverInfo
 import com.rideconnect.domain.model.location.Location
 import com.rideconnect.presentation.components.maps.SearchingMapComponent
-import com.rideconnect.presentation.navigation.Screen
 
 @Composable
 fun SearchingDriverScreen(
@@ -36,7 +34,7 @@ fun SearchingDriverScreen(
     var mapView by remember { mutableStateOf<MapView?>(null) }
 
     LaunchedEffect(Unit) {
-        viewModel.findNearbyDrivers(pickupLocation, requestedVehicleType)
+        viewModel.requestTrip(pickupLocation, destinationLocation, requestedVehicleType)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -47,7 +45,6 @@ fun SearchingDriverScreen(
             onMapViewCreated = { mapView = it }
         )
 
-        // Back button
         IconButton(
             onClick = onBackClick,
             modifier = Modifier
@@ -61,34 +58,137 @@ fun SearchingDriverScreen(
             )
         }
 
-        // Content Display
+        // Hiển thị thông tin địa chỉ đón và đến
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .padding(16.dp)
+                .align(Alignment.TopCenter),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Text(
+                    text = "Điểm đón:",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = pickupLocation.address ?: "Không có địa chỉ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Điểm đến:",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                Text(
+                    text = destinationLocation.address ?: "Không có địa chỉ",
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            if (uiState.isLoading) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    SearchingPulseAnimation()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text("Đang tìm tài xế...", fontSize = 20.sp)
+            when (uiState.searchingState) {
+                SearchingState.SEARCHING -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            SearchingPulseAnimation()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Đang tìm tài xế...", fontSize = 20.sp)
+                        }
+                    }
                 }
-            } else if (uiState.driverInfo != null) {
-                DriverFoundContent(
-                    driverInfo = uiState.driverInfo!!,
-                    onStartTrip = {
-                        // Navigate to the next screen
-                        navController.navigate(
-                            "${Screen.TRIP_CONFIRMATION.route}/${pickupLocation.latitude}/${pickupLocation.longitude}/${destinationLocation.latitude}/${destinationLocation.longitude}/${requestedVehicleType}"
+                SearchingState.DRIVER_FOUND -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            SearchingPulseAnimation()
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Đã tìm thấy tài xế, đang chờ phản hồi...", fontSize = 20.sp)
+                        }
+                    }
+                }
+                SearchingState.DRIVER_ACCEPTED, SearchingState.DRIVER_ARRIVING, SearchingState.DRIVER_ARRIVED -> {
+                    // Hiển thị giao diện khi tài xế chấp nhận chuyến đi
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.BottomCenter
+                    ) {
+                        DriverAcceptedScreen(
+                            tripDetails = uiState.tripDetails!!,
+                            pickupLocation = pickupLocation,
+                            dropOffLocation = destinationLocation,
+                            onCallDriver = { /* Xử lý khi người dùng gọi tài xế */ },
+                            onChatDriver = { /* Xử lý khi người dùng chat với tài xế */ },
+                            onCancelTrip = { /* Xử lý khi người dùng hủy chuyến đi */ }
                         )
                     }
-                )
-            } else if (uiState.error != null) {
-                Text("Error: ${uiState.error}")
+                }
+                SearchingState.NO_DRIVERS_AVAILABLE -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                "Không tìm thấy tài xế",
+                                fontSize = 20.sp,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = onBackClick,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
+                            ) {
+                                Text("Quay lại")
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Hiển thị lỗi nếu có
+            if (uiState.error != null) {
+                Snackbar(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp)
+                ) {
+                    Text("Lỗi: ${uiState.error}")
+                }
             }
         }
     }
 }
-
 
 @Composable
 private fun SearchingPulseAnimation(
@@ -97,8 +197,8 @@ private fun SearchingPulseAnimation(
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
 
     val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 0.8f, // Tăng giá trị ban đầu để vòng tròn to hơn
-        targetValue = 10f,    // Tăng giá trị đích để vòng tròn to hơn khi giãn ra
+        initialValue = 0.8f,
+        targetValue = 10f,
         animationSpec = infiniteRepeatable(
             animation = tween(2000, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Restart
@@ -122,38 +222,12 @@ private fun SearchingPulseAnimation(
     ) {
         Box(
             modifier = Modifier
-                .size(30.dp) // Kích thước cơ bản của vòng tròn
+                .size(30.dp)
                 .scale(pulseScale)
                 .background(
-                    // Màu xanh nhạt
                     color = MaterialTheme.colorScheme.primary.copy(alpha = pulseAlpha),
                     shape = CircleShape
                 )
         )
-    }
-}
-
-@Composable
-private fun DriverFoundContent(
-    driverInfo: DriverInfo,
-    onStartTrip: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("Đã tìm thấy tài xế!", fontSize = 24.sp)
-        Spacer(modifier = Modifier.height(16.dp))
-        Text("ID: ${driverInfo.id}")
-        Text("Số xe: ${driverInfo.plateNumber}")
-        Text("Loại xe: ${driverInfo.vehicleType}")
-        Text("Khoảng cách: ${driverInfo.distance.toInt()} mét")
-        Text("Thời gian đến dự kiến: ${driverInfo.estimatedArrivalTime ?: "Chưa có"} phút")
-        driverInfo.name?.let { Text("Tên: $it") } ?: Text("Tên: Không có")
-        driverInfo.rating?.let { Text("Đánh giá: $it") } ?: Text("Đánh giá: Chưa có")
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onStartTrip) {
-            Text("Bắt đầu chuyến đi")
-        }
     }
 }
