@@ -15,6 +15,8 @@ sealed class Screen(val route: String, val title: String? = null, val iconResId:
     data object DriverHome : Screen("driver_home")
     data object DriverActivity : Screen("driver_activity")
     data object DriverProfile : Screen("driver_profile")
+    data object Scanner : Screen("scanner")
+    data object DriverRegister : Screen("driver_register")
 
     // Gộp NavigationItem vào Screen
     data object Home : Screen("home", "Home", R.drawable.home_icon)

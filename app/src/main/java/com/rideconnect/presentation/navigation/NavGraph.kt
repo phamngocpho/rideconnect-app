@@ -1,5 +1,6 @@
 package com.rideconnect.presentation.navigation
 
+import DocumentScannerViewModel
 import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -28,6 +30,7 @@ import com.rideconnect.presentation.screens.customer.service.CustomerServiceScre
 import com.rideconnect.presentation.screens.customer.trip.CurrentTripScreen
 import com.rideconnect.presentation.screens.customer.trip.HistoryTripScreen
 import com.rideconnect.presentation.screens.driver.dashboard.DriverDashboardScreen
+import com.rideconnect.presentation.screens.driver.document.DocumentScannerScreen
 import com.rideconnect.presentation.screens.driver.profile.DriverProfileScreen
 import com.rideconnect.presentation.screens.driver.trips.ActiveTripScreeen
 
@@ -37,6 +40,7 @@ fun RideConnectNavGraph(
     navController: NavHostController = rememberNavController(),
     startDestination: String = Screen.StartApp.route
 ) {
+    val documentScannerViewModel: DocumentScannerViewModel = viewModel()
     NavHost(
         navController = navController,
         startDestination = startDestination
@@ -371,6 +375,13 @@ fun RideConnectNavGraph(
                 navController = navController
             )
         }
+
+        composable(route = Screen.Scanner.route) {
+            DocumentScannerScreen(
+                navController = navController
+            ) // Cần tạo màn hình này
+        }
+
 
     }
 

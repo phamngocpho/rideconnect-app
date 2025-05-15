@@ -28,7 +28,7 @@ fun DriverProfileScreen(
 ) {
     Scaffold(
         bottomBar = { DriverBottomNavigation(navController) }
-    ){paddingValues ->
+    ){ paddingValues ->
         val logoutState by viewModel.logoutState.collectAsState()
         LaunchedEffect(logoutState) {
             when(logoutState){
@@ -52,7 +52,7 @@ fun DriverProfileScreen(
             // Profile Info
             ProfileInfo(
                 onEditProfileClick = {
-                    navController?.navigate("edit_profile")
+                    navController.navigate("edit_profile")
                 }
             )
 
@@ -65,12 +65,13 @@ fun DriverProfileScreen(
 
             // Menu Items
             ProfileMenuItems(
-                onLogoutClick ={(viewModel.logout())}
+                onLogoutClick = { viewModel.logout() },
+                onDocumentUpdateClick = {
+                    navController.navigate("scanner")
+                }
             )
 
             Spacer(modifier = Modifier.weight(1f))
-
         }
     }
 }
-
