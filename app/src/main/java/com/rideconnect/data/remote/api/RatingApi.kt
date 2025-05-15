@@ -8,8 +8,11 @@ import retrofit2.http.*
 
 interface RatingApi {
 
-    @POST(ApiConstants.RATING_CREATE_ENDPOINT)
-    suspend fun createRating(@Body createRatingRequest: CreateRatingRequest): Response<RatingResponse>
+    @POST(ApiConstants.RATING_TRIP_ENDPOINT)
+    suspend fun createRating(
+        @Path("tripId") tripId: String,
+        @Body createRatingRequest: CreateRatingRequest
+    ): Response<RatingResponse>
 
     @GET(ApiConstants.RATING_USER_ENDPOINT)
     suspend fun getUserRatings(

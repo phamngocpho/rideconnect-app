@@ -263,4 +263,9 @@ object NetworkModule {
     fun provideGoongMapApi(@Named("goongRetrofit") retrofit: Retrofit): GoongMapApi {
         return retrofit.create(GoongMapApi::class.java)
     }
+    @Provides
+    @Singleton
+    fun provideRatingApi(retrofit: Retrofit): RatingApi {
+        return retrofit.create(RatingApi::class.java)
+    }
 }
