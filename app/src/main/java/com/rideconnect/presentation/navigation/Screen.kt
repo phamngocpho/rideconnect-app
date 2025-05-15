@@ -19,6 +19,8 @@ sealed class Screen(val route: String) {
     data object DriverHome : Screen("driver_home")
     data object DriverActivity : Screen("driver_activity")
     data object DriverProfile : Screen("driver_profile")
+    data object Scanner : Screen("scanner")
+    data object DriverRegister : Screen("driver_register")
 
     data object VehicleSelection : Screen("vehicle_selection_screen/{sourceLocationJson}/{destinationLocationJson}") {
         fun createRoute(sourceLocation: Location, destinationLocation: Location?): String {
