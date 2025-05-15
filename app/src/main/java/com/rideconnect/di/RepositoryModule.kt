@@ -2,9 +2,11 @@ package com.rideconnect.di
 
 import com.rideconnect.data.repository.AuthRepositoryImpl
 import com.rideconnect.data.repository.LocationRepositoryImpl
+import com.rideconnect.data.repository.RatingRepositoryImpl
 import com.rideconnect.data.repository.TripRepositoryImpl
 import com.rideconnect.domain.repository.AuthRepository
 import com.rideconnect.domain.repository.LocationRepository
+import com.rideconnect.domain.repository.RatingRepository
 import com.rideconnect.domain.repository.TripRepository
 import dagger.Binds
 import dagger.Module
@@ -30,5 +32,13 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindTripRepository(tripRepositoryImpl: TripRepositoryImpl): TripRepository
+    abstract fun bindTripRepository(
+        tripRepositoryImpl: TripRepositoryImpl
+    ): TripRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRatingRepository(
+        ratingRepositoryImpl: RatingRepositoryImpl
+    ): RatingRepository
 }

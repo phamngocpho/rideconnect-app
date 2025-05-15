@@ -31,7 +31,9 @@ enum class SearchingState {
     DRIVER_FOUND,        // Đã tìm thấy tài xế và đang chờ phản hồi
     DRIVER_ACCEPTED,     // Tài xế đã chấp nhận chuyến đi
     DRIVER_ARRIVING,     // Tài xế đang đến đón
-    DRIVER_ARRIVED,      // Tài xế đã đến điểm đón
+    DRIVER_ARRIVED,
+    COMPLETED,
+    IN_PROGRESS,
     NO_DRIVERS_AVAILABLE // Không tìm thấy tài xế nào
 }
 
@@ -190,13 +192,22 @@ class SearchingDriverViewModel @Inject constructor(
                                     )
                                 }
 
-                                "completed", "in_progress" -> {
+                                "completed" -> {
                                     _uiState.value = _uiState.value.copy(
                                         tripDetails = tripDetails,
-                                        isLoading = false
+                                        isLoading = false,
+                                        searchingState = SearchingState.COMPLETED
                                     )
-                                    // Không cần polling nữa khi chuyến đi đã hoàn thành hoặc đang diễn ra
+                                    // Dừng polling khi chuyến đi đã hoàn thành
                                     break
+                                }
+                                "in_progress" -> {
+                                    _uiState.value = _uiState.value.copy(
+                                        tripDetails = tripDetails,
+                                        isLoading = false,
+                                        searchingState = SearchingState.IN_PROGRESS
+                                    )
+                                    // Tiếp tục polling khi chuyến đi đang diễn ra
                                 }
                             }
                         }

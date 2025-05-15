@@ -38,13 +38,13 @@ class GetAvailableVehiclesUseCase @Inject constructor(
         val distanceInKm = distance / 1000.0
         val durationInMinutes = duration / 60.0
 
-        val baseFareCar = 10000.0
-        val pricePerKmCar = 8000.0
-        val pricePerMinuteCar = 2000.0
+        val baseFareCar = 5000.0
+        val pricePerKmCar = 4000.0
+        val pricePerMinuteCar = 1000.0
 
-        val baseFareBike = 5000.0
-        val pricePerKmBike = 4000.0
-        val pricePerMinuteBike = 1000.0
+        val baseFareBike = 2500.0
+        val pricePerKmBike = 2000.0
+        val pricePerMinuteBike = 500.0
 
         var totalPrice = when (vehicleType) {
             VehicleType.car, VehicleType.car_premium, VehicleType.taxi ->
@@ -56,9 +56,9 @@ class GetAvailableVehiclesUseCase @Inject constructor(
         }
 
         val minFare = 20000.0
-        totalPrice = maxOf(totalPrice, minFare) // Đảm bảo không thấp hơn giá tối thiểu
+        totalPrice = maxOf(totalPrice, minFare)
 
-        val df = DecimalFormat("#.###") // Định dạng số với 3 chữ số thập phân
+        val df = DecimalFormat("#.###")
         return df.format(totalPrice).toDouble()
     }
 

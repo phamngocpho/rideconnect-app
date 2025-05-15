@@ -99,7 +99,7 @@ fun DriverDashboardScreen(
             if (showTripRequestDialog && newTripRequest != null) {
                 TripRequestDialog(
                     trip = newTripRequest!!,
-                    onAccept = { viewModel.acceptTrip() },
+                    onAccept = { viewModel.acceptTripAndNavigate(navController) },
                     onReject = { viewModel.rejectTrip() }
                 )
             }
