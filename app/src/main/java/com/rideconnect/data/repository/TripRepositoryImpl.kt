@@ -178,13 +178,13 @@ class TripRepositoryImpl @Inject constructor(
 
     private fun mapStringToTripStatus(status: String): TripStatus {
         return when (status.uppercase()) {
-            "PENDING" -> TripStatus.pending
-            "ACCEPTED" -> TripStatus.accepted
-            "ARRIVED" -> TripStatus.arrived
-            "IN_PROGRESS" -> TripStatus.in_progress
-            "COMPLETED" -> TripStatus.completed
-            "CANCELLED" -> TripStatus.cancelled
-            else -> TripStatus.pending
+            "PENDING" -> TripStatus.PENDING
+            "ACCEPTED" -> TripStatus.ACCEPTED
+            "ARRIVED" -> TripStatus.ARRIVED
+            "IN_PROGRESS" -> TripStatus.IN_PROGRESS
+            "COMPLETED" -> TripStatus.COMPLETED
+            "CANCELLED" -> TripStatus.CANCELLED
+            else -> TripStatus.PENDING
         }
     }
 }

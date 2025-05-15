@@ -4,7 +4,7 @@ import android.net.Uri
 import com.rideconnect.R
 import com.rideconnect.domain.model.location.Location
 
-sealed class Screen(val route: String) {
+sealed class Screen(val route: String, val title: String? = null, val iconResId: Int? = null) {
     data object StartApp : Screen("start_app_user")
     data object Login : Screen("login")
     data object Register : Screen("register")
@@ -12,10 +12,15 @@ sealed class Screen(val route: String) {
     data object DriverDashboard : Screen("driver_dashboard")
     data object SearchLocation : Screen("search_location")
     data object ConfirmLocation : Screen("confirm_location")
-    data object Home : NavigationItem("home", "Home", R.drawable.home_icon)
-    data object Services : NavigationItem("services", "Services", R.drawable.services_icon)
-    data object Activity : NavigationItem("activity", "Activity", R.drawable.activity_icon)
-    data object Profile : NavigationItem("profile", "Profile", R.drawable.person_icon)
+    data object DriverHome : Screen("driver_home")
+    data object DriverActivity : Screen("driver_activity")
+    data object DriverProfile : Screen("driver_profile")
+
+    // Gộp NavigationItem vào Screen
+    data object Home : Screen("home", "Home", R.drawable.home_icon)
+    data object Services : Screen("services", "Services", R.drawable.services_icon)
+    data object Activity : Screen("activity", "Activity", R.drawable.activity_icon)
+    data object Profile : Screen("profile", "Profile", R.drawable.person_icon)
 
     data object VehicleSelection : Screen("vehicle_selection_screen/{sourceLocationJson}/{destinationLocationJson}") {
         fun createRoute(sourceLocation: Location, destinationLocation: Location?): String {
@@ -30,11 +35,12 @@ sealed class Screen(val route: String) {
             val sourceAddressEncoded = Uri.encode(pickup.address ?: "")
             val destAddressEncoded = Uri.encode(destination.address ?: "")
             return "searching_driver/${pickup.latitude}/${pickup.longitude}/${destination.latitude}/${destination.longitude}/${vehicleType}?sourceAddress=${sourceAddressEncoded}&destAddress=${destAddressEncoded}"
+
         }
     }
 
     data object TRIP_CONFIRMATION : Screen("trip_confirmation/{latitude}/{longitude}/{radiusInKm}/{vehicleType}") {
-        //  Add helper function to build the route with arguments
+
         fun createRoute(latitude: Double, longitude: Double, radiusInKm: Double?, vehicleType: String): String {
             return "trip_confirmation/$latitude/$longitude/${radiusInKm}/$vehicleType"
         }

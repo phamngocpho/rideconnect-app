@@ -128,8 +128,8 @@ class LocationRepositoryImpl @Inject constructor(
                         val firstRoute = routes[0]
 
                         // Log thông tin về tuyến đường mà không tính tổng khoảng cách
-                        Log.d(TAG, "Tuyến đường đầu tiên: ${firstRoute.legs?.size ?: 0} chặng")
-                        firstRoute.legs?.forEachIndexed { index, leg ->
+                        Log.d(TAG, "Tuyến đường đầu tiên: ${firstRoute.legs.size} chặng")
+                        firstRoute.legs.forEachIndexed { index, leg ->
                             Log.d(TAG, "Chặng $index: khoảng cách=${leg.distance}, thời gian=${leg.duration}")
                         }
 
@@ -189,8 +189,8 @@ class LocationRepositoryImpl @Inject constructor(
             if (response != null && response.isSuccessful) {
                 val directionsResponse = response.body()
                 directionsResponse?.routes?.firstOrNull()?.let { firstRoute ->
-                    val distance = firstRoute.legs?.sumOf { it.distance?.value ?: 0 } ?: 0
-                    val duration = firstRoute.legs?.sumOf { it.duration?.value ?: 0 } ?: 0
+                    val distance = firstRoute.legs.sumOf { it.distance.value }
+                    val duration = firstRoute.legs.sumOf { it.duration.value }
                     return@withContext DistanceDuration(distance, duration)
                 }
             } else {

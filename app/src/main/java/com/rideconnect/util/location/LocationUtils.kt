@@ -128,7 +128,7 @@ class LocationUtils @Inject constructor(
      * Lấy vị trí mặc định nếu không thể lấy vị trí thực
      */
     fun getDefaultLocation(): Location {
-        // Vị trí mặc định (có thể là trung tâm thành phố Hồ Chí Minh hoặc Hà Nội)
+        // Vị trí mặc định
         return Location(
             latitude = 10.762622,  // Vị trí mặc định (Hồ Chí Minh)
             longitude = 106.660172,

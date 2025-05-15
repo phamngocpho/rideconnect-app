@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,13 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.rideconnect.R
-import com.rideconnect.presentation.navigation.NavigationItem
 import com.rideconnect.presentation.navigation.Screen
 import com.rideconnect.presentation.ui.theme.*
 
@@ -188,7 +186,7 @@ fun DriverInfoCard() {
                         .background(Color(0xFFE8F5E9), CircleShape)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Chat,
+                        imageVector = Icons.AutoMirrored.Filled.Chat,
                         contentDescription = "Chat",
                         tint = Color(0xFF4CAF50)
                     )
@@ -360,35 +358,4 @@ fun ActionButtons(onEndRide: () -> Unit) {
             Text("End Ride", color = LightPrimary)
         }
     }
-}
-
-
-@Preview(showBackground = true, backgroundColor = 0xFFF8F8F8, heightDp = 800)
-@Composable
-fun CurrentTripScreenPreview() {
-    CurrentTripScreen(tripId = "trip1", navController = rememberNavController())
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DriverInfoCardPreview() {
-    DriverInfoCard()
-}
-
-@Preview(showBackground = true)
-@Composable
-fun TripDetailsCardPreview() {
-    TripDetailsCard()
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MapCardPreview() {
-    MapCard()
-}
-
-@Preview(showBackground = true)
-@Composable
-fun ActionButtonsPreview() {
-    ActionButtons(onEndRide = {})
 }

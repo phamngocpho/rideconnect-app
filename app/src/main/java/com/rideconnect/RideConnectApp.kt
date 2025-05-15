@@ -2,9 +2,10 @@ package com.rideconnect
 
 import android.app.Application
 import com.mapbox.common.MapboxOptions
+import com.rideconnect.data.remote.websocket.WebSocketManager
+import com.rideconnect.util.constants.ApiConstants
 import com.rideconnect.util.map.MapBoxConfig
 import dagger.hilt.android.HiltAndroidApp
-import com.rideconnect.data.remote.websocket.WebSocketManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -12,11 +13,14 @@ import javax.inject.Inject
 
 @HiltAndroidApp
 class RideConnectApp : Application() {
+
     @Inject
     lateinit var webSocketManager: WebSocketManager
+
     override fun onCreate() {
         super.onCreate()
         MapboxOptions.accessToken = MapBoxConfig.getMapBoxAccessToken(this)
+
         initializeWebSocket()
     }
 

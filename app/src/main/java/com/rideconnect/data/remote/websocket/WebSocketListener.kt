@@ -9,21 +9,18 @@ import okio.ByteString
 abstract class WebSocketListener : WebSocketListener() {
     private val TAG = "WebSocketListener"
 
-
     override fun onOpen(webSocket: WebSocket, response: Response) {
         Log.d(TAG, "WebSocket connection opened")
         onConnectionEstablished()
     }
 
     override fun onMessage(webSocket: WebSocket, text: String) {
-        Log.d("WebSocket", "Receiving message: $text")
         Log.d(TAG, "WebSocket message received: $text")
         onMessageReceived(text)
     }
 
     override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
         Log.d(TAG, "WebSocket binary message received: ${bytes.hex()}")
-     // Usually not used in this application
     }
 
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {

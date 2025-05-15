@@ -1,9 +1,7 @@
 package com.rideconnect.domain.model.trip
 
-
 import java.math.BigDecimal
 import java.time.ZonedDateTime
-
 
 data class Trip(
     val id: String,
@@ -33,6 +31,7 @@ data class Trip(
     val cancellationReason: String?,
     val driverLocation: DriverLocation?
 )
+
 data class DriverLocation(
     val latitude: Double,
     val longitude: Double,

@@ -37,14 +37,14 @@ class AuthRepositoryImpl @Inject constructor(
 
             if (response.isSuccessful && response.body() != null) {
                 val loginResponse = response.body()!!
-
+                val userRole = loginResponse.userType ?: "CUSTOMER"
                 val userEntity = UserEntity(
                     id = loginResponse.userId,
                     phoneNumber = phoneNumber,
                     email = null,
-                    fullName = loginResponse.fullName ?: "",
+                    fullName = loginResponse.fullName,
                     avatarUrl = null,
-                    userType = loginResponse.userType ?: "CUSTOMER",
+                    userType = userRole,
                     authToken = loginResponse.token,
                     refreshToken = "",
                     tokenExpiryDate = if (loginResponse.expiresAt != null)
@@ -145,7 +145,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun getAuthToken(): Flow<String> {
         // Sử dụng tokenProvider để lấy token thay vì truy vấn từ UserDao
-        return tokenProvider.getTokenFlow().map { it ?: "" }
+        return tokenProvider.getTokenFlow().map { it }
     }
 
     override suspend fun isTokenValid(): Boolean {
