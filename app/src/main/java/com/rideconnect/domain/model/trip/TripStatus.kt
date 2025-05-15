@@ -1,10 +1,14 @@
 package com.rideconnect.domain.model.trip
 
 enum class TripStatus {
-    pending,
-    accepted,
-    arrived,
-    in_progress,
-    completed,
-    cancelled
+    PENDING,
+    ACCEPTED,
+    ARRIVED,
+    IN_PROGRESS,
+    COMPLETED,
+    CANCELLED;
+
+    override fun toString(): String {
+        return name.lowercase()
+    }
 }

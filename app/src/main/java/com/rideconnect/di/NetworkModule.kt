@@ -1,8 +1,6 @@
 package com.rideconnect.di
 
 import android.util.Log
-import com.google.gson.FieldNamingPolicy
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.rideconnect.BuildConfig
 import com.rideconnect.data.remote.api.*
@@ -53,16 +51,6 @@ object NetworkModule {
             .setLenient()
             .create()
     }
-
-    @Provides
-    @Singleton
-    fun provideGson(): Gson {
-        return GsonBuilder()
-            .setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
-            .setLenient()
-            .create()
-    }
-
 
     @Provides
     @Singleton
@@ -246,12 +234,6 @@ object NetworkModule {
     @Singleton
     fun provideDriverApi(retrofit: Retrofit): DriverApi {
         return retrofit.create(DriverApi::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideTripApi(retrofit: Retrofit): TripApi {
-        return retrofit.create(TripApi::class.java)
     }
 
     @Provides
