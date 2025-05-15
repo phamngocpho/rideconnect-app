@@ -30,13 +30,17 @@ sealed class Screen(val route: String, val title: String? = null, val iconResId:
         }
     }
 
-    data object SearchingDriver : Screen("searching_driver/{sourceLatitude}/{sourceLongitude}/{destLatitude}/{destLongitude}/{vehicleType}") {
+    data object SearchingDriver : Screen("searching_driver/{sourceLatitude}/{sourceLongitude}/{destLatitude}/{destLongitude}/{vehicleType}?sourceAddress={sourceAddress}&destAddress={destAddress}") {
         fun createRoute(pickup: Location, destination: Location, vehicleType: String): String {
-            return "searching_driver/${pickup.latitude}/${pickup.longitude}/${destination.latitude}/${destination.longitude}/$vehicleType"
+            val sourceAddressEncoded = Uri.encode(pickup.address ?: "")
+            val destAddressEncoded = Uri.encode(destination.address ?: "")
+            return "searching_driver/${pickup.latitude}/${pickup.longitude}/${destination.latitude}/${destination.longitude}/${vehicleType}?sourceAddress=${sourceAddressEncoded}&destAddress=${destAddressEncoded}"
+
         }
     }
 
     data object TRIP_CONFIRMATION : Screen("trip_confirmation/{latitude}/{longitude}/{radiusInKm}/{vehicleType}") {
+
         fun createRoute(latitude: Double, longitude: Double, radiusInKm: Double?, vehicleType: String): String {
             return "trip_confirmation/$latitude/$longitude/${radiusInKm}/$vehicleType"
         }

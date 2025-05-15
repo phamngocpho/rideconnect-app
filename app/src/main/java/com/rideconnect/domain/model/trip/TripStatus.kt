@@ -1,10 +1,10 @@
 package com.rideconnect.domain.model.trip
 
 enum class TripStatus {
-    PENDING,
-    ACCEPTED,
-    ARRIVED,
-    IN_PROGRESS,
-    COMPLETED,
-    CANCELLED
+    pending,
+    accepted,
+    arrived,
+    in_progress,
+    completed,
+    cancelled
 }

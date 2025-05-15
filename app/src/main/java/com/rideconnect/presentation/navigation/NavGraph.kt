@@ -115,7 +115,6 @@ fun RideConnectNavGraph(
                 onBackClick = { navController.navigateUp() },
                 onLocationSelected = { source, destination ->
                     if (source != null) {
-                        // Táº¡o URI cho navigation vá»›i cÃ¡c tham sá»‘
                         val sourceLatitude = source.latitude.toFloat()
                         val sourceLongitude = source.longitude.toFloat()
                         val sourceAddress = Uri.encode(source.address)
@@ -216,7 +215,7 @@ fun RideConnectNavGraph(
                     pickupLocation = sourceLocation,
                     destinationLocation = destinationLocation ?: sourceLocation,
                     onBackClick = { navController.popBackStack() },
-                    onBookingConfirmed = { vehicleType, vehicleId, paymentMethodId ->
+                    onBookingConfirmed = { vehicleType, _, _ ->
                         navController.navigate(
                             Screen.SearchingDriver.createRoute(
                                 pickup = sourceLocation,
@@ -236,27 +235,42 @@ fun RideConnectNavGraph(
                 navArgument("sourceLatitude") { type = NavType.FloatType },
                 navArgument("sourceLongitude") { type = NavType.FloatType },
                 navArgument("destLatitude") { type = NavType.FloatType },
-                navArgument("destLongitude") { type = NavType.FloatType }
+                navArgument("destLongitude") { type = NavType.FloatType },
+                navArgument("vehicleType") { type = NavType.StringType },
+                navArgument("sourceAddress") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+                navArgument("destAddress") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
             )
         ) { backStackEntry ->
             val sourceLatitude = backStackEntry.arguments?.getFloat("sourceLatitude") ?: 0f
             val sourceLongitude = backStackEntry.arguments?.getFloat("sourceLongitude") ?: 0f
             val destLatitude = backStackEntry.arguments?.getFloat("destLatitude") ?: 0f
             val destLongitude = backStackEntry.arguments?.getFloat("destLongitude") ?: 0f
-            val vehicleType = backStackEntry.arguments?.getString("vehicleType") ?: "" // Extract vehicleType
+            val vehicleType = backStackEntry.arguments?.getString("vehicleType") ?: ""
+            val sourceAddress = backStackEntry.arguments?.getString("sourceAddress")
+            val destAddress = backStackEntry.arguments?.getString("destAddress")
 
             SearchingDriverScreen(
                 pickupLocation = Location(
                     latitude = sourceLatitude.toDouble(),
-                    longitude = sourceLongitude.toDouble()
+                    longitude = sourceLongitude.toDouble(),
+                    address = sourceAddress
                 ),
                 destinationLocation = Location(
                     latitude = destLatitude.toDouble(),
-                    longitude = destLongitude.toDouble()
+                    longitude = destLongitude.toDouble(),
+                    address = destAddress
                 ),
                 onBackClick = { navController.navigateUp() },
-                navController = navController, // Pass navController here
-                requestedVehicleType = vehicleType,
+                navController = navController,
+                requestedVehicleType = vehicleType
             )
         }
 
