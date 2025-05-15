@@ -328,9 +328,14 @@ class DocumentScannerViewModel : ViewModel() {
         Log.d(TAG, "Đang tìm số bằng lái xe...")
 
         val licenseNumberPatterns = listOf(
-            Regex("(?:Số|Số GPLX|Số bằng lái|Số giấy phép lái xe)\\s*:?\\s*([A-Za-z0-9\\-\\s]+)", RegexOption.IGNORE_CASE),
-            Regex("(?:LICENSE NUMBER|DL NUMBER)\\s*:?\\s*([A-Za-z0-9\\-\\s]+)", RegexOption.IGNORE_CASE),
-            Regex("\\b\\d{9,12}\\b")
+            // Match the specific format in Vietnamese driving licenses
+            Regex("(?:Só/No:|Số/No:|Số:|No:)\\s*([A-Za-z0-9\\-\\s]+?)(?:\\n|$)", RegexOption.IGNORE_CASE),
+            // Match the specific format with GPLX
+            Regex("(?:Số GPLX|Số giấy phép lái xe)\\s*:?\\s*([A-Za-z0-9\\-\\s]+?)(?:\\n|$)", RegexOption.IGNORE_CASE),
+            // Match English formats
+            Regex("(?:LICENSE NUMBER|DL NUMBER|LICENSE NO)\\s*:?\\s*([A-Za-z0-9\\-\\s]+?)(?:\\n|$)", RegexOption.IGNORE_CASE),
+            // Match common license number formats (9-12 digits, possibly ending with a letter)
+            Regex("\\b(\\d{9,12}[A-Z]?)\\b")
         )
 
         for (pattern in licenseNumberPatterns) {
@@ -341,9 +346,24 @@ class DocumentScannerViewModel : ViewModel() {
                 } else {
                     matchResult.value.trim()
                 }
-                Log.d(TAG, "Tìm thấy số bằng lái xe với pattern ${pattern.pattern}: $licenseNumber")
-                return licenseNumber
+
+                // Additional validation - license numbers are typically longer than 5 characters
+                if (licenseNumber.length >= 5) {
+                    Log.d(TAG, "Tìm thấy số bằng lái xe với pattern ${pattern.pattern}: $licenseNumber")
+                    return licenseNumber
+                } else {
+                    Log.d(TAG, "Bỏ qua kết quả quá ngắn: $licenseNumber")
+                }
             }
+        }
+
+        // Special case for Vietnamese format - look for "Só/No:" or similar patterns
+        val specificPattern = Regex("Só/No:\\s*(\\S+)", RegexOption.IGNORE_CASE)
+        val specificMatch = specificPattern.find(text)
+        if (specificMatch != null && specificMatch.groupValues.size > 1) {
+            val licenseNumber = specificMatch.groupValues[1].trim()
+            Log.d(TAG, "Tìm thấy số bằng lái xe với pattern đặc biệt: $licenseNumber")
+            return licenseNumber
         }
 
         return null
