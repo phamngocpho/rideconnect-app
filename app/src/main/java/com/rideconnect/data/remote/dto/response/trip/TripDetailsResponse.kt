@@ -7,36 +7,34 @@ data class TripDetailsResponse(
     val tripId: String,
     val customerId: String,
     val customerName: String,
-    val customerPhone: String?,
+    val customerPhone: String,
     val driverId: String?,
     val driverName: String?,
     val driverPhone: String?,
-    val vehicleDetails: VehicleDetails?,
-    val pickupLocation: Location,
-    val dropOffLocation: Location,
-    val status: String, // "PENDING", "ACCEPTED", "ARRIVED", "STARTED", "COMPLETED", "CANCELLED"
-    val createdAt: ZonedDateTime,
-    val scheduledTime: ZonedDateTime?,
-    val startTime: ZonedDateTime?,
-    val endTime: ZonedDateTime?,
-    val fare: BigDecimal?,
-    val distance: Double?, // in kilometers
-    val duration: Int?, // in minutes
-    val paymentStatus: String?, // "PENDING", "COMPLETED", "FAILED"
-    val paymentMethod: String?,
-    val rating: Int?, // 1-5
-    val note: String?
+    val vehicleType: String?,
+    val vehiclePlate: String?,
+    val pickupLatitude: Double,
+    val pickupLongitude: Double,
+    val pickupAddress: String,
+    val dropoffLatitude: Double,
+    val dropoffLongitude: Double,
+    val dropoffAddress: String,
+    val status: String,
+    val estimatedDistance: Double,
+    val estimatedDuration: Int,
+    val estimatedFare: BigDecimal,
+    val actualFare: BigDecimal?,
+    val createdAt: String,
+    val startedAt: String?,
+    val completedAt: String?,
+    val cancelledAt: String?,
+    val cancellationReason: String?,
+    val driverLocation: DriverLocation?
 ) {
-    data class VehicleDetails(
-        val type: String,
-        val model: String,
-        val color: String,
-        val licensePlate: String
-    )
-
-    data class Location(
+    data class DriverLocation(
         val latitude: Double,
         val longitude: Double,
-        val address: String
+        val heading: Double,
+        val lastUpdated: String?
     )
 }

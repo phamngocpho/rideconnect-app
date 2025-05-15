@@ -8,7 +8,7 @@ data class ProfileResponse(
     val email: String,
     val phoneNumber: String,
     val profilePictureUrl: String?,
-    val userType: String, // "CUSTOMER", "DRIVER", "ADMIN"
+    val userType: String, // "CUSTOMER", "DRIVER"
     val memberSince: ZonedDateTime,
     val isVerified: Boolean
 )

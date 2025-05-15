@@ -42,7 +42,7 @@ class AuthRepositoryImpl @Inject constructor(
                     id = loginResponse.userId,
                     phoneNumber = phoneNumber,
                     email = null,
-                    fullName = loginResponse.fullName ?: "",
+                    fullName = loginResponse.fullName,
                     avatarUrl = null,
                     userType = userRole,
                     authToken = loginResponse.token,
@@ -145,7 +145,7 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun getAuthToken(): Flow<String> {
         // Sử dụng tokenProvider để lấy token thay vì truy vấn từ UserDao
-        return tokenProvider.getTokenFlow().map { it ?: "" }
+        return tokenProvider.getTokenFlow().map { it }
     }
 
     override suspend fun isTokenValid(): Boolean {

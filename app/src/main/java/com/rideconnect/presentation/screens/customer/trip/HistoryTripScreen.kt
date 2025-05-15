@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.rideconnect.presentation.navigation.NavigationItem
 
 @Composable
 fun HistoryTripScreen(navController: NavController) {
@@ -364,49 +363,4 @@ fun RideItem(
             }
         }
     }
-}
-
-
-@Preview(showBackground = true, backgroundColor = 0xFFF8F8F8, heightDp = 800)
-@Composable
-fun ActivityScreenPreview() {
-    HistoryTripScreen(rememberNavController())
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SectionHeaderPreview() {
-    SectionHeader("Yesterday")
-}
-
-@Preview(showBackground = true)
-@Composable
-fun RideItemPreview() {
-    RideItem(
-        tripId = "trip2",
-        pickupLocation = "Emtedad Dr Abdel Hamid Street",
-        pickupTime = "Pickup point at 9:41 pm",
-        destination = "Alexandria Bibliotheca",
-        destinationTime = "Reach destination at 10:05 pm",
-        price = "40.25 EGP",
-        distance = "5.3 km",
-        onTripClick = {},
-        isActive = false
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun RideItemActivePreview() {
-    RideItem(
-        tripId = "trip1",
-        pickupLocation = "Emtedad Dr Abdel Hamid Street",
-        pickupTime = "Pickup point at 9:41 pm",
-        destination = "Alexandria Bibliotheca",
-        destinationTime = "Reach destination at 10:05 pm",
-        price = "40.25 EGP",
-        distance = "5.3 km",
-        onTripClick = {},
-        isActive = true
-    )
 }

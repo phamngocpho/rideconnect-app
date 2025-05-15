@@ -1,6 +1,8 @@
 package com.rideconnect.di
 
 import android.util.Log
+import com.google.gson.FieldNamingPolicy
+import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.rideconnect.BuildConfig
 import com.rideconnect.data.remote.api.*
@@ -42,6 +44,16 @@ object NetworkModule {
             }
         }
     }
+
+    @Provides
+    @Singleton
+    fun provideGson(): Gson {
+        return GsonBuilder()
+            .setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
+            .setLenient()
+            .create()
+    }
+
 
     @Provides
     @Singleton
@@ -191,17 +203,13 @@ object NetworkModule {
     @Singleton
     fun provideRetrofit(
         okHttpClient: OkHttpClient,
-        baseUrl: String
+        baseUrl: String,
+        gson: Gson // Thêm tham số Gson
     ): Retrofit {
-        // Cấu hình Gson với setLenient(true)
-        val gson = GsonBuilder()
-            .setLenient() // Cho phép xử lý JSON không chuẩn
-            .create()
-
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create(gson)) // Sử dụng gson đã cấu hình
+            .addConverterFactory(GsonConverterFactory.create(gson)) // Sử dụng gson được tiêm vào
             .build()
     }
 
@@ -210,16 +218,13 @@ object NetworkModule {
     @Named("goongRetrofit")
     fun provideGoongRetrofit(
         @Named("goongApiBaseUrl") baseUrl: String,
-        @Named("goongOkHttpClient") okHttpClient: OkHttpClient
+        @Named("goongOkHttpClient") okHttpClient: OkHttpClient,
+        gson: Gson // Thêm tham số Gson
     ): Retrofit {
-        val gson = GsonBuilder()
-            .setLenient()
-            .create()
-
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create(gson))
+            .addConverterFactory(GsonConverterFactory.create(gson)) // Sử dụng gson được tiêm vào
             .build()
     }
 
@@ -233,6 +238,12 @@ object NetworkModule {
     @Singleton
     fun provideDriverApi(retrofit: Retrofit): DriverApi {
         return retrofit.create(DriverApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideTripApi(retrofit: Retrofit): TripApi {
+        return retrofit.create(TripApi::class.java)
     }
 
     @Provides

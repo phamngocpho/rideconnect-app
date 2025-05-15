@@ -1,7 +1,6 @@
-package com.rideconnect.presentation.components
+package com.rideconnect.presentation.components.navigation
 
 import android.util.Log
-import com.rideconnect.presentation.navigation.NavigationItem
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
@@ -20,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.rideconnect.R
 import com.rideconnect.presentation.navigation.Screen
 
 @Composable
@@ -46,12 +46,12 @@ fun AppBottomNavigationBar(navController: NavController) {
                 icon = {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Image(
-                            painter = painterResource(item.iconResId),
+                            painter = painterResource(item.iconResId ?: R.drawable.default_icon),
                             contentDescription = item.title,
                             modifier = Modifier.size(24.dp)
                         )
                         Text(
-                            item.title,
+                            text = item.title ?: "",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (selected) Color(0xFF4CAF50) else Color.Gray
