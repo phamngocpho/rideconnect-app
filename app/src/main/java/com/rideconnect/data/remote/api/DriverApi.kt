@@ -20,5 +20,5 @@ interface DriverApi {
     suspend fun getProfile(): Response<DriverProfileResponse>
 
     @PUT(ApiConstants.DRIVER_STATUS_ENDPOINT)
-    suspend fun updateStatus(@Body updateDriverStatusRequest: UpdateDriverStatusRequest): Response<Unit>
+    suspend fun updateDriverStatus(@Body request: UpdateDriverStatusRequest): Response<Unit>
 }
