@@ -23,7 +23,9 @@ data class SearchingDriverUiState(
     val tripDetails: Trip? = null,
     val error: String? = null,
     val isLoading: Boolean = false,
-    val searchingState: SearchingState = SearchingState.SEARCHING
+    val searchingState: SearchingState = SearchingState.SEARCHING,
+    val elapsedTimeInSeconds: Int = 0
+
 )
 
 enum class SearchingState {
@@ -48,7 +50,7 @@ class SearchingDriverViewModel @Inject constructor(
     val uiState: StateFlow<SearchingDriverUiState> = _uiState.asStateFlow()
 
     private var retryCount = 0
-    private val maxRetries = 3 // Giới hạn số lần thử lại khi không có tài xế
+    private val maxRetries = 5 // Giới hạn số lần thử lại khi không có tài xế
     private var pollingJob: Job? = null
     private val pollingInterval = 3000L // Kiểm tra trạng thái mỗi 3 giây
 
@@ -65,11 +67,11 @@ class SearchingDriverViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
                 error = null,
-                searchingState = SearchingState.SEARCHING
+                searchingState = SearchingState.SEARCHING  // Luôn bắt đầu với trạng thái SEARCHING
             )
 
             try {
-                Log.d("SearchingDriverVM", "Requesting trip - Pickup: (${pickupLocation.latitude}, ${pickupLocation.longitude}, ${pickupLocation.address}), Destination: (${destinationLocation.latitude}, ${destinationLocation.longitude}, ${destinationLocation.address}), VehicleType: $requestedVehicleType")
+                Log.d("SearchingDriverVM", "Requesting trip - Pickup: (${pickupLocation.latitude}, ${pickupLocation.longitude}), Destination: (${destinationLocation.latitude}, ${destinationLocation.longitude}), VehicleType: $requestedVehicleType")
 
                 val request = CreateTripRequest(
                     pickupAddress = pickupLocation.address ?: "",
@@ -99,10 +101,16 @@ class SearchingDriverViewModel @Inject constructor(
                             _uiState.value = _uiState.value.copy(
                                 error = "Không nhận được mã chuyến đi hợp lệ",
                                 isLoading = false,
+                                // Vẫn giữ trạng thái SEARCHING để hiển thị animation
+                                searchingState = SearchingState.SEARCHING
+                            )
+
+                            // Đặt một delay trước khi chuyển sang NO_DRIVERS_AVAILABLE
+                            delay(5000) // Đợi 5 giây để người dùng thấy thông báo lỗi
+                            _uiState.value = _uiState.value.copy(
                                 searchingState = SearchingState.NO_DRIVERS_AVAILABLE
                             )
                         }
-
                     }
                     is Resource.Error -> {
                         Log.e("SearchingDriverVM", "Error creating trip: ${result.message}")
@@ -110,25 +118,37 @@ class SearchingDriverViewModel @Inject constructor(
                         _uiState.value = _uiState.value.copy(
                             error = "Không thể tạo chuyến đi: ${result.message}",
                             isLoading = false,
+                            // Vẫn giữ trạng thái SEARCHING để hiển thị animation
+                            searchingState = SearchingState.SEARCHING
+                        )
+
+                        // Đặt một delay trước khi chuyển sang NO_DRIVERS_AVAILABLE
+                        delay(5000) // Đợi 5 giây để người dùng thấy thông báo lỗi
+                        _uiState.value = _uiState.value.copy(
                             searchingState = SearchingState.NO_DRIVERS_AVAILABLE
                         )
                     }
-                    is Resource.Loading -> {
-                        // Xử lý trạng thái loading nếu cần
-                    }
-
-                    is Resource.Idle -> TODO()
+                    else -> { /* Xử lý các trạng thái khác */ }
                 }
             } catch (e: Exception) {
                 Log.e("SearchingDriverVM", "Exception: ${e.message}", e)
+
                 _uiState.value = _uiState.value.copy(
                     error = "Lỗi không xác định: ${e.message}",
                     isLoading = false,
+                    // Vẫn giữ trạng thái SEARCHING để hiển thị animation
+                    searchingState = SearchingState.SEARCHING
+                )
+
+                // Đặt một delay trước khi chuyển sang NO_DRIVERS_AVAILABLE
+                delay(10000) // Đợi 5 giây để người dùng thấy thông báo lỗi
+                _uiState.value = _uiState.value.copy(
                     searchingState = SearchingState.NO_DRIVERS_AVAILABLE
                 )
             }
         }
     }
+
 
     private fun startPollingTripStatus(tripId: String) {
         stopPolling() // Đảm bảo dừng polling trước đó (nếu có)
@@ -136,9 +156,15 @@ class SearchingDriverViewModel @Inject constructor(
         pollingJob = viewModelScope.launch {
             var noDriverTimeout = 0
             val maxTimeout = 60000 // 60 giây timeout nếu không tìm thấy tài xế
+            var elapsedTimeInSeconds = 0
 
             while (true) {
                 try {
+                    if (uiState.value.searchingState == SearchingState.SEARCHING) {
+                        _uiState.value = _uiState.value.copy(
+                            elapsedTimeInSeconds = elapsedTimeInSeconds
+                        )
+                    }
                     when (val result = getTripDetailsUseCase(tripId)) {
                         is Resource.Success -> {
                             val tripDetails = result.data
@@ -156,7 +182,12 @@ class SearchingDriverViewModel @Inject constructor(
                                     // Kiểm tra timeout
                                     noDriverTimeout += pollingInterval.toInt()
                                     if (noDriverTimeout >= maxTimeout) {
-                                        break
+                                        // Chỉ cập nhật trạng thái NO_DRIVERS_AVAILABLE sau khi hết thời gian timeout
+                                        _uiState.value = _uiState.value.copy(
+                                            isLoading = false,
+                                            searchingState = SearchingState.NO_DRIVERS_AVAILABLE
+                                        )
+                                        break // Dừng polling
                                     }
                                 }
                                 "drive_found" -> {
@@ -168,7 +199,7 @@ class SearchingDriverViewModel @Inject constructor(
                                     // Reset timeout khi tìm thấy tài xế
                                     noDriverTimeout = 0
                                 }
-                                "accepted" -> {
+                                    "accepted" -> {
                                     _uiState.value = _uiState.value.copy(
                                         tripDetails = tripDetails,
                                         isLoading = false,
@@ -221,12 +252,24 @@ class SearchingDriverViewModel @Inject constructor(
 
                         is Resource.Idle -> TODO()
                     }
+                    elapsedTimeInSeconds = noDriverTimeout / 1000
+                    if (uiState.value.searchingState == SearchingState.SEARCHING &&
+                        noDriverTimeout >= maxTimeout) {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            searchingState = SearchingState.NO_DRIVERS_AVAILABLE
+                        )
+                        break // Dừng polling
+                    }
                 } catch (e: Exception) {
                     Log.e("SearchingDriverVM", "Exception during polling: ${e.message}", e)
                     // Tiếp tục polling ngay cả khi có exception
                 }
 
                 delay(pollingInterval) // Đợi trước khi kiểm tra lại
+                if (uiState.value.searchingState == SearchingState.SEARCHING) {
+                    noDriverTimeout += pollingInterval.toInt()
+                }
             }
         }
     }

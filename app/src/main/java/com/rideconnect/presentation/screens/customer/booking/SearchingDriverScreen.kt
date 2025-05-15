@@ -4,13 +4,17 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -126,6 +130,16 @@ fun SearchingDriverScreen(
                             SearchingPulseAnimation()
                             Spacer(modifier = Modifier.height(16.dp))
                             Text("Đang tìm tài xế...", fontSize = 20.sp)
+
+                            // Hiển thị thông báo lỗi nếu có
+//                            uiState.error?.let { error ->
+//                                Spacer(modifier = Modifier.height(8.dp))
+//                                Text(
+//                                    text = error,
+//                                    color = MaterialTheme.colorScheme.error,
+//                                    style = MaterialTheme.typography.bodySmall
+//                                )
+//                            }
                         }
                     }
                 }
@@ -181,57 +195,87 @@ fun SearchingDriverScreen(
 
                 SearchingState.NO_DRIVERS_AVAILABLE -> {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 24.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                "Không tìm thấy tài xế",
-                                fontSize = 20.sp,
-                                color = MaterialTheme.colorScheme.error
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Button(
-                                onClick = onBackClick,
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                )
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Text("Quay lại")
+                                // Icon thông báo
+                                Icon(
+                                    imageVector = Icons.Default.Info,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Tiêu đề thông báo
+                                Text(
+                                    text = "Không tìm thấy tài xế",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Medium
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Nội dung thông báo
+                                Text(
+                                    text = "Vui lòng thử lại sau hoặc chọn phương tiện khác",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
+                                Spacer(modifier = Modifier.height(20.dp))
+
+                                // Nút quay lại
+                                Button(
+                                    onClick = onBackClick,
+                                    modifier = Modifier.fillMaxWidth(0.7f),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text("Quay lại")
+                                }
                             }
                         }
                     }
                 }
+
             }
 
             // Hiển thị lỗi nếu có
-            if (uiState.error != null) {
-                Snackbar(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp)
-                ) {
-                    Text("Lỗi: ${uiState.error}")
-                }
-            }
-
-            // Hiển thị lỗi đánh giá nếu có
-            if (ratingUiState.error != null) {
-                Snackbar(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp)
-                ) {
-                    Text("Lỗi: ${ratingUiState.error}")
-                }
-            }
+//            if (uiState.error != null) {
+//                Snackbar(
+//                    modifier = Modifier
+//                        .align(Alignment.BottomCenter)
+//                        .padding(16.dp)
+//                ) {
+//                    Text("Lỗi: ${uiState.error}")
+//                }
+//            }
+//
+//            // Hiển thị lỗi đánh giá nếu có
+//            if (ratingUiState.error != null) {
+//                Snackbar(
+//                    modifier = Modifier
+//                        .align(Alignment.BottomCenter)
+//                        .padding(16.dp)
+//                ) {
+//                    Text("Lỗi: ${ratingUiState.error}")
+//                }
+//            }
         }
     }
 }
