@@ -10,7 +10,7 @@ data class TripHistoryResponse(
         val tripId: String,
         val date: ZonedDateTime,
         val pickupAddress: String,
-        val dropOffAddress: String,
+        val dropoffAddress: String?,
         val status: String,
         val fare: BigDecimal?,
         val distance: Double?, // in kilometers
