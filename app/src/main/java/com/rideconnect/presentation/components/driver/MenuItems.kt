@@ -54,8 +54,6 @@ fun ProfileMenuItems(
         MenuItemRow(icon = Icons.Outlined.AccountBalanceWallet, text = "Wallet balance")
         MenuItemRow(icon = Icons.Default.Settings, text = "Setting")
         MenuItemRow(icon = Icons.Default.Star, text = "Rating & Reviews")
-        MenuItemRow(icon = Icons.Outlined.SupportAgent, text = "Customer Support")
-        MenuItemRow(icon = Icons.Outlined.Security, text = "Privacy Policy")
         LogoutButton(
             onLogoutClick = onLogoutClick
         )
