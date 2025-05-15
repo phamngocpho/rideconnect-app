@@ -1,18 +1,10 @@
 package com.rideconnect
 
 import android.app.Application
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.navigation.compose.rememberNavController
 import com.mapbox.common.MapboxOptions
-import com.rideconnect.presentation.components.AppBottomNavigationBar
 import com.rideconnect.util.map.MapBoxConfig
 import dagger.hilt.android.HiltAndroidApp
 import com.rideconnect.data.remote.websocket.WebSocketManager
-import com.rideconnect.util.constants.ApiConstants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

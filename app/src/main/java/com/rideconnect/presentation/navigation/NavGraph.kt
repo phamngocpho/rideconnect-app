@@ -14,7 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.rideconnect.domain.model.location.Location
-import com.rideconnect.presentation.components.AppBottomNavigationBar
+import com.rideconnect.presentation.components.navigation.AppBottomNavigationBar
 import com.rideconnect.presentation.screens.auth.start.StartApp
 import com.rideconnect.presentation.screens.auth.login.LoginScreen
 import com.rideconnect.presentation.screens.auth.register.RegisterScreen

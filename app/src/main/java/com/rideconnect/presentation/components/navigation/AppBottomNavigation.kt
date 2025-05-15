@@ -1,7 +1,6 @@
-package com.rideconnect.presentation.components
+package com.rideconnect.presentation.components.navigation
 
 import android.util.Log
-import com.rideconnect.presentation.navigation.NavigationItem
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size

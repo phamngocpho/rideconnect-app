@@ -19,7 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.rideconnect.presentation.components.AppBottomNavigationBar
+import com.rideconnect.presentation.components.navigation.AppBottomNavigationBar
 import com.rideconnect.presentation.navigation.Screen
 
 @AndroidEntryPoint
