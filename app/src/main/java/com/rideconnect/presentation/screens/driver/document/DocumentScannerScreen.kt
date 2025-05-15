@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -34,6 +35,11 @@ import com.rideconnect.presentation.navigation.Screen
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+
+// Định nghĩa màu chủ đạo và các màu phái sinh
+val LightGreen = Color(0xFF37B44E)
+val DarkGreen = Color(0xFF2A8A3B)
+val LightGreenBackground = Color(0xFFEBF7ED)
 
 enum class DocumentType {
     VEHICLE_REGISTRATION,
@@ -131,11 +137,38 @@ fun DocumentScannerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Quét giấy tờ") },
+                title = {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Quét giấy tờ",
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = Color.White
+                        )
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            Icons.Default.ArrowBack,
+                            contentDescription = "Quay lại",
+                            tint = Color.White
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                    containerColor = LightGreen,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                ),
+                actions = {
+                    // Thêm Spacer để cân đối với nút back
+                    Spacer(modifier = Modifier.width(48.dp))
+                }
             )
         }
     ) { paddingValues ->
@@ -173,7 +206,7 @@ fun DocumentScannerScreen(
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = null,
-                                tint = Color.Green
+                                tint = LightGreen
                             )
                         }
                     }
@@ -215,7 +248,8 @@ fun DocumentScannerScreen(
                                     currentDocumentType.value = DocumentType.DRIVING_LICENSE
                                     checkCameraPermissionAndLaunch()
                                 },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = LightGreen)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Camera,
@@ -233,7 +267,8 @@ fun DocumentScannerScreen(
                                     currentDocumentType.value = DocumentType.DRIVING_LICENSE
                                     galleryLauncher.launch("image/*")
                                 },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = LightGreen)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.PhotoLibrary,
@@ -275,7 +310,7 @@ fun DocumentScannerScreen(
                             Icon(
                                 imageVector = Icons.Default.CheckCircle,
                                 contentDescription = null,
-                                tint = Color.Green
+                                tint = LightGreen
                             )
                         }
                     }
@@ -346,7 +381,8 @@ fun DocumentScannerScreen(
                                     currentDocumentType.value = DocumentType.VEHICLE_REGISTRATION
                                     checkCameraPermissionAndLaunch()
                                 },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = LightGreen)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Camera,
@@ -364,7 +400,8 @@ fun DocumentScannerScreen(
                                     currentDocumentType.value = DocumentType.VEHICLE_REGISTRATION
                                     galleryLauncher.launch("image/*")
                                 },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = LightGreen)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.PhotoLibrary,
@@ -383,9 +420,7 @@ fun DocumentScannerScreen(
                 Button(
                     onClick = { scanBothDocuments() },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = LightGreen)
                 ) {
                     Text("Quét và trích xuất thông tin từ cả hai giấy tờ")
                 }
@@ -394,7 +429,7 @@ fun DocumentScannerScreen(
             }
 
             if (isLoading.value) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = LightGreen)
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
@@ -408,7 +443,12 @@ fun DocumentScannerScreen(
                     value = vehicleType,
                     onValueChange = { vehicleType = it },
                     label = { Text("Loại xe") },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = LightGreen,
+                        focusedLabelColor = LightGreen,
+                        cursorColor = LightGreen
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -417,13 +457,13 @@ fun DocumentScannerScreen(
                     onClick = {
                         viewModel.saveDocumentInfo(extractedInfo.value, vehicleType)
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = LightGreen)
                 ) {
                     Text("Lưu thông tin giấy tờ")
                 }
             }
+
         }
     }
 }
-
-

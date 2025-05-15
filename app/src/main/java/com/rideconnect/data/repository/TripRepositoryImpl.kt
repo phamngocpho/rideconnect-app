@@ -5,6 +5,7 @@ import com.rideconnect.data.remote.api.TripApi
 import com.rideconnect.data.remote.dto.request.trip.CreateTripRequest
 import com.rideconnect.data.remote.dto.request.trip.UpdateTripStatusRequest
 import com.rideconnect.data.remote.dto.response.trip.TripDetailsResponse
+import com.rideconnect.data.remote.dto.response.trip.TripHistoryResponse
 import com.rideconnect.data.remote.websocket.WebSocketManager
 import com.rideconnect.domain.model.trip.DriverLocation
 import com.rideconnect.domain.model.trip.Trip
@@ -18,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -136,6 +138,64 @@ class TripRepositoryImpl @Inject constructor(
         _currentTrip.value = null
         Log.d(TAG, "Đã xóa chuyến đi hiện tại")
     }
+
+    override suspend fun getTripHistory(page: Int, size: Int): Resource<List<Trip>> {
+        return try {
+            Log.d(TAG, "Đang gọi API lấy lịch sử chuyến đi: page=$page, size=$size")
+            val response = tripApi.getTripHistory(page, size)
+
+            if (response.isSuccessful && response.body() != null) {
+                val historyResponse = response.body()!!
+                val tripList = historyResponse.trips.map { tripSummary ->
+                    mapTripSummaryToTrip(tripSummary)
+                }
+                Log.d(TAG, "Lấy thành công ${tripList.size} chuyến đi")
+                Resource.Success(tripList)
+            } else {
+                Log.e(TAG, "API trả về lỗi: ${response.code()} - ${response.message()}")
+                Resource.Error(
+                    message = response.errorBody()?.string() ?: "Không thể lấy lịch sử chuyến đi"
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Exception khi gọi API lịch sử chuyến đi: ${e.message}", e)
+            Resource.Error(message = e.message ?: "Đã xảy ra lỗi kết nối")
+        }
+    }
+
+    private fun mapTripSummaryToTrip(tripSummary: TripHistoryResponse.TripSummary): Trip {
+        return Trip(
+            id = tripSummary.tripId,
+            customerId = "",
+            customerName = "",
+            customerPhone = "",
+            driverId = "",
+            driverName = tripSummary.driverName ?: "",
+            driverPhone = "",
+            vehicleType = tripSummary.vehicleType ?: "",
+            vehiclePlate = "",
+            pickupLatitude = 0.0,
+            pickupLongitude = 0.0,
+            pickupAddress = tripSummary.pickupAddress,
+            dropOffLatitude = 0.0,
+            dropOffLongitude = 0.0,
+            dropOffAddress = tripSummary.dropoffAddress ?: "",
+            status = mapStringToTripStatus(tripSummary.status),
+            estimatedDistance = tripSummary.distance ?: 0.0,
+            estimatedDuration = tripSummary.duration ?: 0,
+            estimatedFare = tripSummary.fare ?: BigDecimal.ZERO,
+            actualFare = tripSummary.fare ?: BigDecimal.ZERO,
+            // Sử dụng toán tử Elvis để xử lý trường hợp null
+            requestedAt = tripSummary.date?.toString() ?: "",
+            startedAt = null,
+            completedAt = null,
+            cancelledAt = null,
+            cancellationReason = "",
+            driverLocation = null
+        )
+    }
+
+
 
     // Hàm chuyển đổi từ DTO sang domain model
     private fun mapTripDetailsResponseToTrip(response: TripDetailsResponse): Trip {

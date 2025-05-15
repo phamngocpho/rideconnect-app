@@ -11,5 +11,6 @@ interface TripRepository {
     suspend fun createTrip(createTripRequest: CreateTripRequest): Resource<Trip>
     suspend fun getTripDetails(tripId: String): Resource<Trip>
     suspend fun updateTripStatus(tripId: String, updateTripStatusRequest: UpdateTripStatusRequest): Resource<Trip>
+    suspend fun getTripHistory(page: Int = 0, size: Int = 10): Resource<List<Trip>>
     fun clearCurrentTrip()
 }

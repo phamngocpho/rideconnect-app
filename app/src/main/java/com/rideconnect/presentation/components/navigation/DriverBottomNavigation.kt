@@ -3,6 +3,7 @@ package com.rideconnect.presentation.components.navigation
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Analytics
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -61,14 +62,14 @@ fun DriverBottomNavigation(navController: NavController) {
         NavigationBarItem(
             icon = {
                 Icon(
-                    imageVector = Icons.Default.Analytics,
-                    contentDescription = "Activity"
+                    imageVector = Icons.Default.History,
+                    contentDescription = "History"
                 )
             },
-            label = { Text("Activity") },
-            selected = currentRoute == "driver_activity",
+            label = { Text("History") },
+            selected = currentRoute == "trip_history",
             onClick = {
-                navController.navigate("driver_activity") {
+                navController.navigate("trip_history") {
                     popUpTo(navController.graph.findStartDestination().id) {
                         saveState = true
                     }

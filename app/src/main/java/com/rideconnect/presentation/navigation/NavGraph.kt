@@ -32,7 +32,7 @@ import com.rideconnect.presentation.screens.customer.trip.HistoryTripScreen
 import com.rideconnect.presentation.screens.driver.dashboard.DriverDashboardScreen
 import com.rideconnect.presentation.screens.driver.document.DocumentScannerScreen
 import com.rideconnect.presentation.screens.driver.profile.DriverProfileScreen
-import com.rideconnect.presentation.screens.driver.trips.ActiveTripScreeen
+import com.rideconnect.presentation.screens.driver.trips.TripHistoryScreen
 
 
 @Composable
@@ -359,11 +359,7 @@ fun RideConnectNavGraph(
 //                }
 //            )
 //        }
-        composable(route = Screen.DriverActivity.route) {
-            ActiveTripScreeen(
-                navController = navController
-            ) // Cần tạo màn hình này
-        }
+
 //
         composable(route = Screen.DriverProfile.route) {
             DriverProfileScreen(
@@ -380,6 +376,16 @@ fun RideConnectNavGraph(
             DocumentScannerScreen(
                 navController = navController
             ) // Cần tạo màn hình này
+        }
+
+        composable(
+            route = "trip_history"
+        ) {
+            TripHistoryScreen(
+                navController = navController,
+                onBackClick = { navController.popBackStack() }
+
+            )
         }
 
 
