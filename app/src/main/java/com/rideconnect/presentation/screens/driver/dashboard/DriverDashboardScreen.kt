@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -25,11 +26,52 @@ fun DriverDashboardScreen(
     navController: NavController,
     viewModel: DriverDashboardViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val isOnline by viewModel.isOnline.collectAsState()
     val showTripRequestDialog by viewModel.showTripRequestDialog.collectAsState()
     val newTripRequest by viewModel.newTripRequest.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val pendingStatus by viewModel.pendingStatus.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Hiển thị dialog khi có lỗi và có trạng thái đang chờ
+    if (errorMessage != null && pendingStatus != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelPendingStatusUpdate() },
+            title = { Text("Lỗi cập nhật trạng thái") },
+            text = { Text(errorMessage ?: "Đã xảy ra lỗi khi cập nhật trạng thái.") },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.clearErrorMessage()
+                    viewModel.retryStatusUpdate(context)
+                }) {
+                    Text("Thử lại")
+                }
+            },
+            dismissButton = {
+                Button(onClick = {
+                    viewModel.clearErrorMessage()
+                    viewModel.cancelPendingStatusUpdate()
+                }) {
+                    Text("Hủy")
+                }
+            }
+        )
+    }
+    // Hiển thị snackbar cho các lỗi khác (không có trạng thái đang chờ)
+    else if (errorMessage != null) {
+        LaunchedEffect(errorMessage) {
+            snackbarHostState.showSnackbar(
+                message = errorMessage ?: "Đã xảy ra lỗi.",
+                actionLabel = "Đóng",
+                duration = SnackbarDuration.Short
+            )
+            viewModel.clearErrorMessage()
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = { DriverBottomNavigation(navController) }
     ) { paddingValues ->
         Box(

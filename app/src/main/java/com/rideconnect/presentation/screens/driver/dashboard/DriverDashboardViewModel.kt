@@ -8,11 +8,14 @@ import androidx.lifecycle.viewModelScope
 import com.rideconnect.data.remote.dto.request.trip.UpdateTripStatusRequest
 import com.rideconnect.data.remote.websocket.WebSocketManager
 import com.rideconnect.domain.model.trip.Trip
-import com.rideconnect.domain.model.trip.TripStatus
 import com.rideconnect.domain.repository.TripRepository
+import com.rideconnect.domain.usecase.driver.UpdateDriverStatusUseCase
 import com.rideconnect.service.LocationUpdateService
+import com.rideconnect.util.Resource
 import com.rideconnect.util.extensions.isCancelled
 import com.rideconnect.util.extensions.isCompleted
+import com.rideconnect.util.preferences.PreferenceKeys
+import com.rideconnect.util.preferences.PreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,7 +26,9 @@ import javax.inject.Inject
 @HiltViewModel
 class DriverDashboardViewModel @Inject constructor(
     private val webSocketManager: WebSocketManager,
-    private val tripRepository: TripRepository
+    private val tripRepository: TripRepository,
+    private val updateDriverStatusUseCase: UpdateDriverStatusUseCase,
+    private val preferenceManager: PreferenceManager
 ) : ViewModel() {
 
     private val _isOnline = MutableStateFlow(false)
@@ -40,7 +45,24 @@ class DriverDashboardViewModel @Inject constructor(
     // Context để sử dụng khi cần khởi động service
     private var appContext: Context? = null
 
+    // Thêm các state cho việc cập nhật trạng thái tài xế
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private val _pendingStatus = MutableStateFlow<String?>(null)
+    val pendingStatus: StateFlow<String?> = _pendingStatus.asStateFlow()
+
     init {
+        // Khởi tạo trạng thái từ local storage
+        viewModelScope.launch {
+            preferenceManager.getPreference(PreferenceKeys.DRIVER_ONLINE_STATUS, false).collect { status ->
+                _isOnline.value = status
+            }
+        }
+
         // Lắng nghe các yêu cầu chuyến đi mới từ WebSocket
         viewModelScope.launch {
             webSocketManager.newTripRequestFlow.collect { tripResponse ->
@@ -49,15 +71,11 @@ class DriverDashboardViewModel @Inject constructor(
 
                 // Tự động chuyển sang trạng thái online nếu cần
                 if (!_isOnline.value) {
-                    _isOnline.value = true
-                    Log.d("DriverDashboardVM", "Đã tự động chuyển sang trạng thái online")
-
-                    // Khởi động service nếu có context
+                    // Sử dụng hàm toggleOnlineStatus để đảm bảo cập nhật đúng trạng thái
                     appContext?.let { context ->
-                        val serviceIntent = Intent(context, LocationUpdateService::class.java)
-                        context.startService(serviceIntent)
-                        Log.d("DriverDashboardVM", "Đã khởi động LocationUpdateService")
+                        toggleOnlineStatus(context, true)
                     }
+                    Log.d("DriverDashboardVM", "Đã tự động chuyển sang trạng thái online")
                 }
 
                 // Luôn lấy thông tin chuyến đi mới nhất từ repository
@@ -85,30 +103,77 @@ class DriverDashboardViewModel @Inject constructor(
         }
     }
 
-    fun toggleOnlineStatus(context: Context, isOnline: Boolean) {
+    fun toggleOnlineStatus(context: Context, online: Boolean) {
         // Lưu context để sử dụng sau này
         if (appContext == null) {
             appContext = context.applicationContext
         }
 
-        val wasOffline = !_isOnline.value
-        _isOnline.value = isOnline
+        if (_isLoading.value) return // Tránh gọi nhiều lần khi đang loading
 
-        if (isOnline && wasOffline) {
-            // Bắt đầu service theo dõi vị trí khi online
-            val serviceIntent = Intent(context, LocationUpdateService::class.java)
-            context.startService(serviceIntent)
-            Log.d("DriverDashboardVM", "Đã khởi động LocationUpdateService từ toggleOnlineStatus")
-        } else if (!isOnline) {
-            // Dừng service khi offline
-            val serviceIntent = Intent(context, LocationUpdateService::class.java)
-            context.stopService(serviceIntent)
-            Log.d("DriverDashboardVM", "Đã dừng LocationUpdateService")
+        // Chuyển đổi Boolean thành String status
+        val status = if (online) "online" else "offline"
 
-            // Đóng dialog nếu đang hiển thị
-            _showTripRequestDialog.value = false
-            _newTripRequest.value = null
+        viewModelScope.launch {
+            _isLoading.value = true
+            _pendingStatus.value = status // Lưu trạng thái đang cố gắng chuyển sang
+
+            updateDriverStatusUseCase(status).collect { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        _isOnline.value = online
+                        preferenceManager.setPreference(PreferenceKeys.DRIVER_ONLINE_STATUS, online)
+
+                        if (online) {
+                            val serviceIntent = Intent(context, LocationUpdateService::class.java)
+                            context.startForegroundService(serviceIntent)
+                            Log.d("DriverDashboardVM", "Đã khởi động LocationUpdateService từ toggleOnlineStatus")
+                        } else {
+                            context.stopService(Intent(context, LocationUpdateService::class.java))
+                            Log.d("DriverDashboardVM", "Đã dừng LocationUpdateService")
+
+                            // Đóng dialog nếu đang hiển thị
+                            _showTripRequestDialog.value = false
+                            _newTripRequest.value = null
+                        }
+                        _isLoading.value = false
+                        _pendingStatus.value = null // Xóa trạng thái đang chờ
+                    }
+                    is Resource.Error -> {
+                        // Xử lý message lỗi trống
+                        val errorMsg = result.message?.takeIf { it.isNotBlank() }
+                            ?: "Không thể cập nhật trạng thái. Lỗi máy chủ (500)."
+
+                        _errorMessage.value = errorMsg
+                        Log.e("DriverDashboardVM", "Lỗi cập nhật trạng thái: $errorMsg")
+                        _isLoading.value = false
+                        // Không xóa _pendingStatus để có thể hiển thị nút thử lại
+                    }
+                    is Resource.Loading -> {
+                        _isLoading.value = true
+                    }
+                    else -> {}
+                }
+            }
         }
+    }
+
+    // Thêm hàm thử lại
+    fun retryStatusUpdate(context: Context) {
+        _pendingStatus.value?.let { status ->
+            val online = status == "online"
+            toggleOnlineStatus(context, online)
+        }
+    }
+
+    fun clearErrorMessage() {
+        _errorMessage.value = null
+    }
+
+    // Hàm hủy thao tác đang chờ
+    fun cancelPendingStatusUpdate() {
+        _pendingStatus.value = null
+        _isLoading.value = false
     }
 
     fun acceptTrip() {
