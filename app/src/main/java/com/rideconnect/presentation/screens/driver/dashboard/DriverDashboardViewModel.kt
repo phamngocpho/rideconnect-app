@@ -5,15 +5,13 @@ import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavController
-import com.rideconnect.data.remote.dto.request.trip.CreateTripRequest.Location
 import com.rideconnect.data.remote.dto.request.trip.UpdateTripStatusRequest
 import com.rideconnect.data.remote.websocket.WebSocketManager
 import com.rideconnect.domain.model.trip.Trip
-import com.rideconnect.domain.model.trip.TripStatus
 import com.rideconnect.domain.repository.TripRepository
-import com.rideconnect.presentation.navigation.Screen
+import com.rideconnect.domain.usecase.driver.UpdateDriverStatusUseCase
 import com.rideconnect.service.LocationUpdateService
+import com.rideconnect.util.Resource
 import com.rideconnect.util.extensions.isCancelled
 import com.rideconnect.util.extensions.isCompleted
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +24,8 @@ import javax.inject.Inject
 @HiltViewModel
 class DriverDashboardViewModel @Inject constructor(
     private val webSocketManager: WebSocketManager,
-    private val tripRepository: TripRepository
+    private val tripRepository: TripRepository,
+    private val updateDriverStatusUseCase: UpdateDriverStatusUseCase
 ) : ViewModel() {
 
     private val _isOnline = MutableStateFlow(false)
@@ -39,6 +38,16 @@ class DriverDashboardViewModel @Inject constructor(
     // Trạng thái hiển thị dialog
     private val _showTripRequestDialog = MutableStateFlow(false)
     val showTripRequestDialog: StateFlow<Boolean> = _showTripRequestDialog.asStateFlow()
+
+    // Thêm các trạng thái mới cho việc cập nhật status
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private val _pendingStatus = MutableStateFlow<String?>(null)
+    val pendingStatus: StateFlow<String?> = _pendingStatus.asStateFlow()
 
     // Context để sử dụng khi cần khởi động service
     private var appContext: Context? = null
@@ -54,8 +63,7 @@ class DriverDashboardViewModel @Inject constructor(
                 if (!_isOnline.value) {
                     _isOnline.value = true
                     Log.d("DriverDashboardVM", "Đã tự động chuyển sang trạng thái online")
-
-                    // Khởi động service nếu có context
+// Khởi động service nếu có context
                     appContext?.let { context ->
                         val serviceIntent = Intent(context, LocationUpdateService::class.java)
                         context.startService(serviceIntent)
@@ -94,72 +102,85 @@ class DriverDashboardViewModel @Inject constructor(
             appContext = context.applicationContext
         }
 
-        val wasOffline = !_isOnline.value
-        _isOnline.value = isOnline
+        // Nếu đang loading thì không xử lý thêm
+        if (_isLoading.value) return
 
-        if (isOnline && wasOffline) {
-            // Bắt đầu service theo dõi vị trí khi online
-            val serviceIntent = Intent(context, LocationUpdateService::class.java)
-            context.startService(serviceIntent)
-            Log.d("DriverDashboardVM", "Đã khởi động LocationUpdateService từ toggleOnlineStatus")
-        } else if (!isOnline) {
-            // Dừng service khi offline
-            val serviceIntent = Intent(context, LocationUpdateService::class.java)
-            context.stopService(serviceIntent)
-            Log.d("DriverDashboardVM", "Đã dừng LocationUpdateService")
+        // Chuyển đổi Boolean thành String status
+        val status = if (isOnline) "online" else "offline"
 
-            // Đóng dialog nếu đang hiển thị
-            _showTripRequestDialog.value = false
-            _newTripRequest.value = null
-        }
-    }
+        _isLoading.value = true
+        _pendingStatus.value = status
 
-    fun acceptTripAndNavigate(navController: NavController) {
         viewModelScope.launch {
-            _newTripRequest.value?.let { trip ->
-                val result = tripRepository.updateTripStatus(
-                    tripId = trip.id,
-                    updateTripStatusRequest = UpdateTripStatusRequest(
-                        status = "accepted"
-                    )
-                )
+            updateDriverStatusUseCase(status).collect { result ->
+                when (result) {
+                    is Resource.Success -> {
+                        // Cập nhật trạng thái thành công
+                        val wasOffline = !_isOnline.value
+                        _isOnline.value = isOnline
 
-                if (result.data != null) {
-                    navController.navigate(
-                        Screen.DriverNavigation.createRoute(
-                            originLat = trip.pickupLatitude,
-                            originLng = trip.pickupLongitude,
-                            destLat = trip.dropOffLatitude,
-                            destLng = trip.dropOffLongitude,
-                            tripId = trip.id
-                        )
-                    ) {
-                        popUpTo(Screen.DriverHome.route)
+                        if (isOnline && wasOffline) {
+                            // Bắt đầu service theo dõi vị trí khi online
+                            val serviceIntent = Intent(context, LocationUpdateService::class.java)
+                            context.startService(serviceIntent)
+                            Log.d("DriverDashboardVM", "Đã khởi động LocationUpdateService từ toggleOnlineStatus")
+                        } else if (!isOnline) {
+                            // Dừng service khi offline
+                            val serviceIntent = Intent(context, LocationUpdateService::class.java)
+                            context.stopService(serviceIntent)
+                            Log.d("DriverDashboardVM", "Đã dừng LocationUpdateService")
+
+                            // Đóng dialog nếu đang hiển thị
+                            _showTripRequestDialog.value = false
+                            _newTripRequest.value = null
+                        }
+
+                        _isLoading.value = false
+                        _pendingStatus.value = null
+                        _errorMessage.value = null
                     }
+                    is Resource.Error -> {
+                        // Xử lý message lỗi trống
+                        val errorMsg = result.message?.takeIf { it.isNotBlank() }
+                            ?: "Không thể cập nhật trạng thái. Lỗi máy chủ (500)."
 
-                    _showTripRequestDialog.value = false
+                        _errorMessage.value = errorMsg
+                        Log.e("DriverDashboardVM", "Lỗi cập nhật trạng thái: $errorMsg")
+                        _isLoading.value = false
+                        // Không xóa _pendingStatus để có thể hiển thị nút thử lại
+                    }
+                    is Resource.Loading -> {
+                        _isLoading.value = true
+                    }
+                    else -> {}
                 }
             }
         }
     }
 
-    private fun getCurrentDriverLocation(): Location? {
-        // Implement this to get the driver's current location
-        // This might come from a LocationRepository or LocationService
-        // For now, returning a placeholder location
-        return Location(
-            latitude = 10.762622,
-            longitude = 106.660172,
-            address = "Current Location"
-        )
+    // Thêm hàm thử lại
+    fun retryStatusUpdate(context: Context) {
+        _pendingStatus.value?.let { status ->
+            val online = status == "online"
+            toggleOnlineStatus(context, online)
+        }
+    }
+
+    fun clearErrorMessage() {
+        _errorMessage.value = null
+    }
+
+    // Hàm hủy thao tác đang chờ
+    fun cancelPendingStatusUpdate() {
+        _pendingStatus.value = null
+        _isLoading.value = false
     }
 
     fun acceptTrip() {
         viewModelScope.launch {
             _newTripRequest.value?.let { trip ->
                 tripRepository.updateTripStatus(
-                    tripId = trip.id,
-                    updateTripStatusRequest = UpdateTripStatusRequest(
+                    tripId = trip.id,updateTripStatusRequest = UpdateTripStatusRequest(
                         status = "accepted"
                     )
                 )

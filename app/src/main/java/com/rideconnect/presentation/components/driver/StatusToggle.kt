@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +32,12 @@ fun StatusToggle(
     context: Context = LocalContext.current
 ) {
     val isOnline by viewModel.isOnline.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val pendingStatus by viewModel.pendingStatus.collectAsState()
+
+    // Xác định trạng thái loading cho từng nút
+    val isLoadingOffline = isLoading && pendingStatus == "offline"
+    val isLoadingOnline = isLoading && pendingStatus == "online"
 
     Row(
         modifier = Modifier
@@ -53,26 +60,35 @@ fun StatusToggle(
                 .padding(4.dp)
                 .clip(RoundedCornerShape(40.dp))
                 .background(if (!isOnline) Color(0xFFE57373) else Color.White)
-                .clickable { viewModel.toggleOnlineStatus(context, false) },
+                .clickable(enabled = !isLoading) { viewModel.toggleOnlineStatus(context, false) },
             contentAlignment = Alignment.Center
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Offline",
-                    tint = if (!isOnline) Color.White else Color.Gray,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "Offline",
+            if (isLoadingOffline) {
+                // Hiển thị loading indicator khi đang chuyển sang offline
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
                     color = if (!isOnline) Color.White else Color.Gray,
-                    fontWeight = if (!isOnline) FontWeight.Bold else FontWeight.Normal,
-                    fontSize = 14.sp
+                    strokeWidth = 2.dp
                 )
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Offline",
+                        tint = if (!isOnline) Color.White else Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Offline",
+                        color = if (!isOnline) Color.White else Color.Gray,
+                        fontWeight = if (!isOnline) FontWeight.Bold else FontWeight.Normal,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
 
@@ -84,26 +100,35 @@ fun StatusToggle(
                 .padding(4.dp)
                 .clip(RoundedCornerShape(40.dp))
                 .background(if (isOnline) Color(0xFF7BC67E) else Color.White)
-                .clickable { viewModel.toggleOnlineStatus(context, true) },
+                .clickable(enabled = !isLoading) { viewModel.toggleOnlineStatus(context, true) },
             contentAlignment = Alignment.Center
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = "Online",
-                    tint = if (isOnline) Color.White else Color.Gray,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "Online",
+            if (isLoadingOnline) {
+                // Hiển thị loading indicator khi đang chuyển sang online
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
                     color = if (isOnline) Color.White else Color.Gray,
-                    fontWeight = if (isOnline) FontWeight.Bold else FontWeight.Normal,
-                    fontSize = 14.sp
+                    strokeWidth = 2.dp
                 )
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Online",
+                        tint = if (isOnline) Color.White else Color.Gray,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Online",
+                        color = if (isOnline) Color.White else Color.Gray,
+                        fontWeight = if (isOnline) FontWeight.Bold else FontWeight.Normal,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
     }
