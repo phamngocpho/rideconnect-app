@@ -5,6 +5,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
@@ -34,7 +35,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun ProfileMenuItems(
     onLogoutClick: () -> Unit = {},
-    onDocumentUpdateClick: () -> Unit = {}
+    onDocumentUpdateClick: () -> Unit = {},
+    onTripHistoryClick: () -> Unit = {}
 ) {
     Column {
         MenuItemRow(icon = Icons.Default.Person, text = "Your profile")
@@ -42,6 +44,11 @@ fun ProfileMenuItems(
             icon = Icons.Outlined.Description,
             text = "Cập nhật giấy tờ",
             onClick = onDocumentUpdateClick
+        )
+        MenuItemRow(
+            icon = Icons.Default.History,
+            text = "Lịch sử chuyến đi",
+            onClick = onTripHistoryClick
         )
         MenuItemRow(icon = Icons.Default.List, text = "List of trips")
         MenuItemRow(icon = Icons.Outlined.AccountBalanceWallet, text = "Wallet balance")
