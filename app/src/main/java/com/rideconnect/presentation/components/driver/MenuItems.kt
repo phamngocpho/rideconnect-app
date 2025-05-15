@@ -45,6 +45,7 @@ fun ProfileMenuItems(
             text = "Cập nhật giấy tờ",
             onClick = onDocumentUpdateClick
         )
+
         MenuItemRow(
             icon = Icons.Default.History,
             text = "Lịch sử chuyến đi",
@@ -54,6 +55,7 @@ fun ProfileMenuItems(
         MenuItemRow(icon = Icons.Outlined.AccountBalanceWallet, text = "Wallet balance")
         MenuItemRow(icon = Icons.Default.Settings, text = "Setting")
         MenuItemRow(icon = Icons.Default.Star, text = "Rating & Reviews")
+
         LogoutButton(
             onLogoutClick = onLogoutClick
         )
