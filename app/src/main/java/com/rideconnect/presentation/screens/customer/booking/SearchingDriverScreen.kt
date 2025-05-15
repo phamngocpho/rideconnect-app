@@ -20,6 +20,7 @@ import com.mapbox.geojson.Point
 import com.mapbox.maps.MapView
 import com.rideconnect.domain.model.location.Location
 import com.rideconnect.presentation.components.maps.SearchingMapComponent
+import com.rideconnect.presentation.navigation.Screen
 
 @Composable
 fun SearchingDriverScreen(
@@ -28,74 +29,86 @@ fun SearchingDriverScreen(
     onBackClick: () -> Unit,
     navController: NavController,
     requestedVehicleType: String,
-    viewModel: SearchingDriverViewModel = hiltViewModel()
+    viewModel: SearchingDriverViewModel = hiltViewModel(),
+    ratingViewModel: RatingViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val ratingUiState by ratingViewModel.uiState.collectAsState()
     var mapView by remember { mutableStateOf<MapView?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.requestTrip(pickupLocation, destinationLocation, requestedVehicleType)
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        SearchingMapComponent(
-            modifier = Modifier.fillMaxSize(),
-            searchRadius = 1000.0,
-            centerLocation = Point.fromLngLat(pickupLocation.longitude, pickupLocation.latitude),
-            onMapViewCreated = { mapView = it }
-        )
-
-        IconButton(
-            onClick = onBackClick,
-            modifier = Modifier
-                .padding(16.dp)
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), CircleShape)
-                .align(Alignment.TopStart)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back"
-            )
+    // Set trip details to rating view model when trip is completed
+    LaunchedEffect(uiState.searchingState) {
+        if (uiState.searchingState == SearchingState.COMPLETED) {
+            uiState.tripDetails?.let { ratingViewModel.setTrip(it) }
         }
+    }
 
-        // Hiển thị thông tin địa chỉ đón và đến
-        Card(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .padding(16.dp)
-                .align(Alignment.TopCenter),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Hiển thị bản đồ khi chưa hoàn thành chuyến đi
+        if (uiState.searchingState != SearchingState.COMPLETED) {
+            SearchingMapComponent(
+                modifier = Modifier.fillMaxSize(),
+                searchRadius = 1000.0,
+                centerLocation = Point.fromLngLat(pickupLocation.longitude, pickupLocation.latitude),
+                onMapViewCreated = { mapView = it }
             )
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp)
+
+            IconButton(
+                onClick = onBackClick,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), CircleShape)
+                    .align(Alignment.TopStart)
             ) {
-                Text(
-                    text = "Điểm đón:",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
                 )
-                Text(
-                    text = pickupLocation.address ?: "Không có địa chỉ",
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+            }
 
-                Spacer(modifier = Modifier.height(8.dp))
+            // Hiển thị thông tin địa chỉ đón và đến
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(0.9f)
+                    .padding(16.dp)
+                    .align(Alignment.TopCenter),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "Điểm đón:",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                    Text(
+                        text = pickupLocation.address ?: "Không có địa chỉ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
 
-                Text(
-                    text = "Điểm đến:",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-                Text(
-                    text = destinationLocation.address ?: "Không có địa chỉ",
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Điểm đến:",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                    Text(
+                        text = destinationLocation.address ?: "Không có địa chỉ",
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
 
@@ -128,7 +141,8 @@ fun SearchingDriverScreen(
                         }
                     }
                 }
-                SearchingState.DRIVER_ACCEPTED, SearchingState.DRIVER_ARRIVING, SearchingState.DRIVER_ARRIVED -> {
+                SearchingState.DRIVER_ACCEPTED, SearchingState.DRIVER_ARRIVING,
+                SearchingState.DRIVER_ARRIVED, SearchingState.IN_PROGRESS -> {
                     // Hiển thị giao diện khi tài xế chấp nhận chuyến đi
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -144,6 +158,27 @@ fun SearchingDriverScreen(
                         )
                     }
                 }
+                SearchingState.COMPLETED -> {
+                    // Hiển thị giao diện đánh giá tài xế
+                    RateDriverScreen(
+                        trip = uiState.tripDetails!!,
+                        onRateSubmit = { rating, feedback ->
+                            // Xử lý khi người dùng gửi đánh giá
+                            ratingViewModel.submitRating(rating, feedback)
+                        },
+                        onBackClick = onBackClick
+                    )
+                    // Hiển thị thông báo khi đánh giá thành công
+                    if (ratingUiState.isSuccess) {
+                        LaunchedEffect(Unit) {
+                            // Điều hướng về màn hình chính (Home) sau khi đánh giá thành công
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(navController.graph.id) { inclusive = true }
+                            }
+                        }
+                    }
+                }
+
                 SearchingState.NO_DRIVERS_AVAILABLE -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -184,6 +219,17 @@ fun SearchingDriverScreen(
                         .padding(16.dp)
                 ) {
                     Text("Lỗi: ${uiState.error}")
+                }
+            }
+
+            // Hiển thị lỗi đánh giá nếu có
+            if (ratingUiState.error != null) {
+                Snackbar(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp)
+                ) {
+                    Text("Lỗi: ${ratingUiState.error}")
                 }
             }
         }
