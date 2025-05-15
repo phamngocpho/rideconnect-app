@@ -5,11 +5,14 @@ import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
+import com.rideconnect.data.remote.dto.request.trip.CreateTripRequest.Location
 import com.rideconnect.data.remote.dto.request.trip.UpdateTripStatusRequest
 import com.rideconnect.data.remote.websocket.WebSocketManager
 import com.rideconnect.domain.model.trip.Trip
 import com.rideconnect.domain.model.trip.TripStatus
 import com.rideconnect.domain.repository.TripRepository
+import com.rideconnect.presentation.navigation.Screen
 import com.rideconnect.service.LocationUpdateService
 import com.rideconnect.util.extensions.isCancelled
 import com.rideconnect.util.extensions.isCompleted
@@ -109,6 +112,46 @@ class DriverDashboardViewModel @Inject constructor(
             _showTripRequestDialog.value = false
             _newTripRequest.value = null
         }
+    }
+
+    fun acceptTripAndNavigate(navController: NavController) {
+        viewModelScope.launch {
+            _newTripRequest.value?.let { trip ->
+                val result = tripRepository.updateTripStatus(
+                    tripId = trip.id,
+                    updateTripStatusRequest = UpdateTripStatusRequest(
+                        status = "accepted"
+                    )
+                )
+
+                if (result.data != null) {
+                    navController.navigate(
+                        Screen.DriverNavigation.createRoute(
+                            originLat = trip.pickupLatitude,
+                            originLng = trip.pickupLongitude,
+                            destLat = trip.dropOffLatitude,
+                            destLng = trip.dropOffLongitude,
+                            tripId = trip.id
+                        )
+                    ) {
+                        popUpTo(Screen.DriverHome.route)
+                    }
+
+                    _showTripRequestDialog.value = false
+                }
+            }
+        }
+    }
+
+    private fun getCurrentDriverLocation(): Location? {
+        // Implement this to get the driver's current location
+        // This might come from a LocationRepository or LocationService
+        // For now, returning a placeholder location
+        return Location(
+            latitude = 10.762622,
+            longitude = 106.660172,
+            address = "Current Location"
+        )
     }
 
     fun acceptTrip() {

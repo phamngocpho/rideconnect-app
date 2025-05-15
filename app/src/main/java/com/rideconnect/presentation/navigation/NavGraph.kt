@@ -31,6 +31,7 @@ import com.rideconnect.presentation.screens.customer.trip.CurrentTripScreen
 import com.rideconnect.presentation.screens.customer.trip.HistoryTripScreen
 import com.rideconnect.presentation.screens.driver.dashboard.DriverDashboardScreen
 import com.rideconnect.presentation.screens.driver.document.DocumentScannerScreen
+import com.rideconnect.presentation.screens.driver.navigation.DriverNavigationScreen
 import com.rideconnect.presentation.screens.driver.profile.DriverProfileScreen
 import com.rideconnect.presentation.screens.driver.trips.ActiveTripScreeen
 
@@ -382,6 +383,32 @@ fun RideConnectNavGraph(
             ) // Cần tạo màn hình này
         }
 
+        // Add this to your NavGraph.kt file, inside the NavHost composable
+        composable(
+            route = Screen.DriverNavigation.route,
+            arguments = listOf(
+                navArgument("originLat") { type = NavType.FloatType },
+                navArgument("originLng") { type = NavType.FloatType },
+                navArgument("destLat") { type = NavType.FloatType },
+                navArgument("destLng") { type = NavType.FloatType },
+                navArgument("tripId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val originLat = backStackEntry.arguments?.getFloat("originLat")?.toDouble() ?: 0.0
+            val originLng = backStackEntry.arguments?.getFloat("originLng")?.toDouble() ?: 0.0
+            val destLat = backStackEntry.arguments?.getFloat("destLat")?.toDouble() ?: 0.0
+            val destLng = backStackEntry.arguments?.getFloat("destLng")?.toDouble() ?: 0.0
+            val tripId = backStackEntry.arguments?.getString("tripId") ?: ""
+
+            DriverNavigationScreen(
+                navController = navController,
+                originLatitude = originLat,
+                originLongitude = originLng,
+                destinationLatitude = destLat,
+                destinationLongitude = destLng,
+                tripId = tripId
+            )
+        }
 
     }
 

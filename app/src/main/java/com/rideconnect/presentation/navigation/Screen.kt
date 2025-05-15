@@ -47,4 +47,10 @@ sealed class Screen(val route: String, val title: String? = null, val iconResId:
             return "trip_confirmation/$latitude/$longitude/${radiusInKm}/$vehicleType"
         }
     }
+
+    data object DriverNavigation : Screen("driver_navigation/{originLat}/{originLng}/{destLat}/{destLng}/{tripId}") {
+        fun createRoute(originLat: Double, originLng: Double, destLat: Double, destLng: Double, tripId: String): String {
+            return "driver_navigation/$originLat/$originLng/$destLat/$destLng/$tripId"
+        }
+    }
 }

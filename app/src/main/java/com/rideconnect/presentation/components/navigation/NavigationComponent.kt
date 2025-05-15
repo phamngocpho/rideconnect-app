@@ -5,6 +5,7 @@ import com.rideconnect.R
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -66,7 +67,8 @@ fun NavigationComponent(
     originLongitude: Double,
     originLatitude: Double,
     destinationLongitude: Double,
-    destinationLatitude: Double
+    destinationLatitude: Double,
+    onTripCompleted: () -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -278,7 +280,9 @@ fun NavigationComponent(
                         .clip(RoundedCornerShape(28.dp))
                         .background(Color(0xFF4CAF50))
                         .clickable {
+                            Log.d("NavigationComponent", "Complete trip button clicked")
                             mapboxNavigation.stopTripSession()
+                            onTripCompleted()  // Gọi callback khi ấn nút
                         }
                         .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.Center
