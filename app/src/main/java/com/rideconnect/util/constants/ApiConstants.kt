@@ -27,8 +27,13 @@ object ApiConstants {
     const val CUSTOMER_ADDRESS_ENDPOINT = "customer/address"
 
     // Driver Endpoints
+<<<<<<< HEAD
     const val DRIVER_REGISTER_ENDPOINT = "driver/register"
     const val DRIVER_DASHBOARD_ENDPOINT = "driver/dashboard"
+=======
+    const val DRIVER_REGISTER_ENDPOINT = "drivers/register"
+    const val DRIVER_DASHBOARD_ENDPOINT = "drivers/dashboard"
+>>>>>>> 768b3842f0e38e4cb6f6c421e602c90773175322
     const val DRIVER_PROFILE_ENDPOINT = "drivers/profile"
     const val DRIVER_STATUS_ENDPOINT = "drivers/status"
 

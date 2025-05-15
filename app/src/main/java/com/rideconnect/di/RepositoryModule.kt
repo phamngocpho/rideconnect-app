@@ -32,10 +32,13 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+<<<<<<< HEAD
     abstract fun bindTripRepository(tripRepositoryImpl: TripRepositoryImpl): TripRepository
 
     @Binds
     @Singleton
+=======
+>>>>>>> 768b3842f0e38e4cb6f6c421e602c90773175322
     abstract fun bindDriverRepository(
         driverRepositoryImpl: DriverRepositoryImpl
     ): DriverRepository
