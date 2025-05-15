@@ -44,10 +44,7 @@ fun DriverProfileScreen(
                 .background(Color.White)
                 .padding(paddingValues)
         ) {
-            // Top Bar
-            TopBar(
-                onBackClick = { /* Xử lý khi nhấn nút Back nếu cần */ }
-            )
+
 
             // Profile Info
             ProfileInfo(
@@ -68,6 +65,9 @@ fun DriverProfileScreen(
                 onLogoutClick = { viewModel.logout() },
                 onDocumentUpdateClick = {
                     navController.navigate("scanner")
+                } ,
+                onTripHistoryClick = {
+                            navController.navigate("trip_history")
                 }
             )
 

@@ -33,7 +33,7 @@ import com.rideconnect.presentation.screens.driver.dashboard.DriverDashboardScre
 import com.rideconnect.presentation.screens.driver.document.DocumentScannerScreen
 import com.rideconnect.presentation.screens.driver.navigation.DriverNavigationScreen
 import com.rideconnect.presentation.screens.driver.profile.DriverProfileScreen
-import com.rideconnect.presentation.screens.driver.trips.ActiveTripScreeen
+import com.rideconnect.presentation.screens.driver.trips.TripHistoryScreen
 
 
 @Composable
@@ -360,11 +360,7 @@ fun RideConnectNavGraph(
 //                }
 //            )
 //        }
-        composable(route = Screen.DriverActivity.route) {
-            ActiveTripScreeen(
-                navController = navController
-            ) // Cần tạo màn hình này
-        }
+
 //
         composable(route = Screen.DriverProfile.route) {
             DriverProfileScreen(
@@ -382,8 +378,7 @@ fun RideConnectNavGraph(
                 navController = navController
             ) // Cần tạo màn hình này
         }
-
-        // Add this to your NavGraph.kt file, inside the NavHost composable
+        
         composable(
             route = Screen.DriverNavigation.route,
             arguments = listOf(
@@ -407,6 +402,16 @@ fun RideConnectNavGraph(
                 destinationLatitude = destLat,
                 destinationLongitude = destLng,
                 tripId = tripId
+            )
+        }
+        
+        composable(
+            route = "trip_history"
+        ) {
+            TripHistoryScreen(
+                navController = navController,
+                onBackClick = { navController.popBackStack() }
+
             )
         }
 

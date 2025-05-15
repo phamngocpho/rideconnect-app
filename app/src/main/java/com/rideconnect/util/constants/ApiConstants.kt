@@ -50,8 +50,8 @@ object ApiConstants {
 
     // Rating Endpoints
     const val RATING_CREATE_ENDPOINT = "rating/create"
-    const val RATING_USER_ENDPOINT = "rating/user/{userId}"
-    const val RATING_TRIP_ENDPOINT = "ratings/trip/{tripId}"
+    const val RATING_USER_ENDPOINT = "ratings/user/{userId}"
+    const val RATING_TRIP_ENDPOINT = "ratings/trips/{tripId}"
 
     // Message Endpoints
     const val CONVERSATIONS_ENDPOINT = "messages/conversations"
