@@ -42,11 +42,26 @@ class TripRepositoryImpl @Inject constructor(
         // Lắng nghe các cập nhật từ WebSocket và cập nhật _currentTrip
         repositoryScope.launch {
             webSocketManager.tripUpdatesFlow.collect { tripResponse ->
-                _currentTrip.value?.let { currentTrip ->
-                    if (tripResponse.tripId == currentTrip.id) {
-                        Log.d(TAG, "Cập nhật thông tin chuyến đi hiện tại: ${tripResponse.tripId}, trạng thái: ${tripResponse.status}")
-                        _currentTrip.value = mapTripDetailsResponseToTrip(tripResponse)
+                try {
+                    Log.d(TAG, "Nhận cập nhật chuyến đi: ${tripResponse.tripId}, trạng thái: ${tripResponse.status}")
+
+                    // Luôn cập nhật _currentTrip nếu ID trùng khớp
+                    _currentTrip.value?.let { currentTrip ->
+                        if (tripResponse.tripId == currentTrip.id) {
+                            val updatedTrip = mapTripDetailsResponseToTrip(tripResponse)
+                            _currentTrip.value = updatedTrip
+                            Log.d(TAG, "Đã cập nhật chuyến đi hiện tại: ${updatedTrip.id}, trạng thái: ${updatedTrip.status}")
+                        }
                     }
+
+                    // Nếu không có chuyến đi hiện tại và trạng thái là "accepted", cập nhật _currentTrip
+                    if (_currentTrip.value == null && tripResponse.status.equals("accepted", ignoreCase = true)) {
+                        val newTrip = mapTripDetailsResponseToTrip(tripResponse)
+                        _currentTrip.value = newTrip
+                        Log.d(TAG, "Đã thiết lập chuyến đi mới: ${newTrip.id}, trạng thái: ${newTrip.status}")
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Lỗi khi xử lý cập nhật chuyến đi: ${e.message}", e)
                 }
             }
         }

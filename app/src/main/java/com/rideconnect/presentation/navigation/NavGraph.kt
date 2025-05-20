@@ -94,7 +94,7 @@ fun RideConnectNavGraph(
                     }
                 },
                 onRegisterSuccess = {
-                    navController.navigate(Screen.CustomerDashboard.route) {
+                    navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 }
