@@ -149,6 +149,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you encounter any issues or have questions about this project, please create an issue in the repository.
 
-## Project Links:
+## Project Links
 - Android App: [https://github.com/phamngocpho/rideconnect-app](https://github.com/phamngocpho/rideconnect-app)
 - Backend API: [https://github.com/phamngocpho/rideconnect-api](https://github.com/phamngocpho/rideconnect-api)
